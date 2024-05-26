@@ -7,6 +7,37 @@ from selenium.webdriver.common.keys import Keys
 from selenium.webdriver.support.ui import WebDriverWait
 from selenium.webdriver.support import expected_conditions as EC
 
+# creating global immutable dictionaries of the months in case I accidentally try to chang it
+
+hebrew_months = {
+    "בינו'": "01",
+    "בפבר'": "02",
+    "במרץ": "03",
+    "באפר'": "04",
+    "במאי": "05",
+    "ביוני": "06",
+    "ביולי": "07",
+    "באוג'": "08",
+    "בספט'": "09",
+    "באוק'": "10",
+    "בנוב'": "11",
+    "בדצמ'": "12"
+}
+
+english_months = {
+    "Jan": "01",
+    "Feb": "02",
+    "Mar": "03",
+    "Apr": "04",
+    "May": "05",
+    "Jun": "06",
+    "Jul": "07",
+    "Aug": "08",
+    "Sept": "09",
+    "Oct": "10",
+    "Nov": "11",
+    "Dec": "12"
+}
 
 def make_directory(path, directory_name="Google Photos"):
     """
@@ -45,15 +76,15 @@ def get_language(driver, url):
     element = driver.find_element('tag name', 'body')
     time.sleep(0.3)
     element.send_keys(Keys.ARROW_LEFT)
-    time.sleep(0.2)
+    time.sleep(0.5)
     if driver.current_url == url:
         element.send_keys(Keys.ARROW_RIGHT)
-        time.sleep(0.2)
+        time.sleep(0.5)
         element.send_keys(Keys.ARROW_LEFT)
         return "english"
     else:
         element.send_keys(Keys.ARROW_RIGHT)
-        time.sleep(0.3)
+        time.sleep(0.5)
         return "hebrew"
 
 
@@ -72,8 +103,25 @@ def move_to_next_photo(driver, direction):
     time.sleep(0.3)
 
 
-def get_date():
-    return
+def get_file_name(date, language):
+    """
+
+    :param date: the date of the photo as a String
+    :param language: the language the date is written.
+    :return: the name of the current photo in this format - YYYY.MM.DD, to be able to sort by name in the directory.
+    """
+    # Split the text into an array by spaces
+    date = date.replace('\u200F', '')
+    date_as_array = date.split()
+    date_as_array = [word.replace(',', '') for word in date_as_array]
+    day = date_as_array[4]
+    if language == "hebrew":
+        month = hebrew_months.get(date_as_array[5])
+    else:
+        month = english_months.get(date_as_array[5])
+    year = date_as_array[6]
+    file_name = year + "." + month + "." + day
+    return file_name
 
 
 
@@ -114,10 +162,6 @@ def crawler(url, download_all_photos=True, number_of_photos= 10):
         Direction = "left"
 
 
-
-
-
-
     # if(download_all_photos):
     #     while True:
     #         #TODO: make a break statment if after moving to the next photo we are still in the same url.
@@ -132,9 +176,12 @@ def crawler(url, download_all_photos=True, number_of_photos= 10):
     # Extract the innerHTML of the div element
     div_text = div_element.get_attribute("innerHTML")
 
-    # Print the extracted text
-    print("Text inside the div element:", div_text)
+    file_name = get_file_name(div_text, Language)
 
+    # Print the extracted text
+    print(file_name)
+
+    #TODO: need to implement a method that saves the ne image with the new name in a certain directory. right click => V is creating save photo as...
 
     while True:
         time.sleep(0.5)
