@@ -2,10 +2,14 @@ import os
 import time
 
 from selenium import webdriver
+from selenium.webdriver import ActionChains
 from selenium.webdriver.common.by import By
 from selenium.webdriver.common.keys import Keys
 from selenium.webdriver.support.ui import WebDriverWait
 from selenium.webdriver.support import expected_conditions as EC
+import keyboard
+import piexif
+from PIL import Image
 
 # creating global immutable dictionaries of the months in case I accidentally try to chang it
 
@@ -38,6 +42,8 @@ english_months = {
     "Nov": "11",
     "Dec": "12"
 }
+
+
 
 def make_directory(path, directory_name="Google Photos"):
     """
@@ -120,10 +126,39 @@ def get_file_name(date, language):
     else:
         month = english_months.get(date_as_array[5])
     year = date_as_array[6]
-    file_name = year + "." + month + "." + day
+    time = date_as_array[7]
+    file_name = year + ":" + month + ":" + day + " " + time
     return file_name
 
 
+def save_image_as(name, directory_path, driver, element):
+    actions = ActionChains(driver)
+    actions.context_click(element).perform()
+
+    keyboard.send('v')
+
+    # Optional: handle the "Save As" dialog if necessary
+    time.sleep(1)  # Adjust delay as needed for dialog to appear
+    keyboard.write(name)
+    keyboard.send('alt+d')
+    # input the right directory
+    keyboard.write(directory_path)  # C:\Users\galev\OneDrive\Desktop
+    time.sleep(0.1)
+    keyboard.send('enter')
+    time.sleep(0.5)
+    for i in range(9):
+        keyboard.send('tab')
+        time.sleep(0.1)
+    keyboard.send('enter')
+    time.sleep(0.1)
+
+
+def set_metadata(file_path, date_str):
+    exif_dict = piexif.load(file_path)
+    exif_dict["Exif"][piexif.ExifIFD.DateTimeOriginal] = date_str.encode("utf-8")
+    exif_dict["Exif"][piexif.ExifIFD.DateTimeDigitized] = date_str.encode("utf-8")
+    exif_bytes = piexif.dump(exif_dict)
+    piexif.insert(exif_bytes, file_path)
 
 
 def crawler(url, download_all_photos=True, number_of_photos= 10):
@@ -176,18 +211,26 @@ def crawler(url, download_all_photos=True, number_of_photos= 10):
     # Extract the innerHTML of the div element
     div_text = div_element.get_attribute("innerHTML")
 
-    file_name = get_file_name(div_text, Language)
+    file_date = get_file_name(div_text, Language)
+    file_name = file_date.replace(':', "_")
+    element = driver.find_element('tag name', 'body')
+    path_str = "C:\\Users\\galev\\OneDrive\\Desktop"
+    save_image_as(file_name, path_str, driver, element)
+    set_metadata(path_str+"\\"+file_name, file_date)
+    move_to_next_photo(driver, Direction)
 
-    # Print the extracted text
-    print(file_name)
+    # # Use pyautogui to select "Save Image As"
+    # pyautogui.press('v')  # or adjust to the appropriate key for "Save Image As"
+    #
+    # # Optional: handle the "Save As" dialog if necessary
+    # time.sleep(1)  # Adjust delay as needed for dialog to appear
+    # pyautogui.typewrite("desired_filename.png")  # Change to your desired filename
 
-    #TODO: need to implement a method that saves the ne image with the new name in a certain directory. right click => V is creating save photo as...
 
     while True:
         time.sleep(0.5)
 
 
 if __name__ == '__main__':
-    user_path = "C:\\Users\\galev\\AppData\\Local\\Google\\Chrome\\User Data\\Default"
     crawler("https://photos.google.com/photo/AF1QipPG5bUkHMsthrvYUWJSTFsJ9WhFJY2GWYVsY0Kz")
 
