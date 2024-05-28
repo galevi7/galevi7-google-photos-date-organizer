@@ -43,7 +43,7 @@ english_months = {
     "Dec": "12"
 }
 
-
+# TODO: function for making directories according to the month and the year
 
 def make_directory(path, directory_name="Google Photos"):
     """
@@ -109,13 +109,20 @@ def move_to_next_photo(driver, direction):
     time.sleep(0.3)
 
 
-def get_file_name(date, language):
+def get_file_name(driver, language):
     """
 
-    :param date: the date of the photo as a String
+    :param driver: google chrome driver
     :param language: the language the date is written.
     :return: the name of the current photo in this format - YYYY.MM.DD, to be able to sort by name in the directory.
     """
+
+    # # Find the div element by XPath
+    div_element = driver.find_element(By.XPATH, "//div[@aria-live='assertive']")
+
+    # Extract the innerHTML of the div element
+    date = div_element.get_attribute("innerHTML")
+
     # Split the text into an array by spaces
     date = date.replace('\u200F', '')
     date_as_array = date.split()
@@ -131,7 +138,7 @@ def get_file_name(date, language):
     return file_name
 
 
-def save_image_as(name, directory_path, driver, element):
+def save_image_as(name, directory_path, driver, element, index=0):
     actions = ActionChains(driver)
     actions.context_click(element).perform()
 
@@ -140,17 +147,20 @@ def save_image_as(name, directory_path, driver, element):
     # Optional: handle the "Save As" dialog if necessary
     time.sleep(1)  # Adjust delay as needed for dialog to appear
     keyboard.write(name)
-    keyboard.send('alt+d')
-    # input the right directory
-    keyboard.write(directory_path)  # C:\Users\galev\OneDrive\Desktop
-    time.sleep(0.1)
-    keyboard.send('enter')
+    if index == 0:
+        keyboard.send('alt+d')
+        # input the right directory
+        keyboard.write(directory_path)  # C:\Users\galev\OneDrive\Desktop
+        time.sleep(0.3)
+        keyboard.send('enter')
+        time.sleep(0.25)
+        for i in range(9):
+            keyboard.send('tab')
+            time.sleep(0.3)
+        keyboard.send('enter')
+    else:
+        keyboard.send('enter')
     time.sleep(0.5)
-    for i in range(9):
-        keyboard.send('tab')
-        time.sleep(0.1)
-    keyboard.send('enter')
-    time.sleep(0.1)
 
 
 def set_metadata(file_path, date_str):
@@ -185,6 +195,15 @@ def crawler(url, download_all_photos=True, number_of_photos= 10):
     # entering the photo we got from the user.
     driver.get(url)
 
+    keyboard.write('galevi403')
+    time.sleep(0.5)
+    keyboard.send('enter')
+    time.sleep(10)
+    keyboard.write('Gal140921Tehila')
+    time.sleep(0.5)
+    keyboard.send('enter')
+    time.sleep(0.5)
+
     # Waiting until the user correctly logged-in and letting the driver sleep and not overload the cpu.
     while driver.current_url != url:
         time.sleep(0.2)
@@ -205,26 +224,18 @@ def crawler(url, download_all_photos=True, number_of_photos= 10):
     # else:
     #     for i in range(number_of_photos):
     #         #TODO: function that download and save it in the right directory.
-    # # Find the div element by XPath
-    div_element = driver.find_element(By.XPATH, "//div[@aria-live='assertive']")
 
-    # Extract the innerHTML of the div element
-    div_text = div_element.get_attribute("innerHTML")
+    path_str = "C:\\Users\\galev\\OneDrive\\Desktop\\Google Photos"
 
-    file_date = get_file_name(div_text, Language)
-    file_name = file_date.replace(':', "_")
-    element = driver.find_element('tag name', 'body')
-    path_str = "C:\\Users\\galev\\OneDrive\\Desktop"
-    save_image_as(file_name, path_str, driver, element)
-    set_metadata(path_str+"\\"+file_name, file_date)
-    move_to_next_photo(driver, Direction)
 
-    # # Use pyautogui to select "Save Image As"
-    # pyautogui.press('v')  # or adjust to the appropriate key for "Save Image As"
-    #
-    # # Optional: handle the "Save As" dialog if necessary
-    # time.sleep(1)  # Adjust delay as needed for dialog to appear
-    # pyautogui.typewrite("desired_filename.png")  # Change to your desired filename
+
+    for i in range(15):
+        file_date = get_file_name(driver, Language)
+        file_name = file_date.replace(':', "_")
+        element = driver.find_element('tag name', 'body')
+        save_image_as(file_name, path_str, driver, element, i)
+        set_metadata(path_str+"\\"+file_name+".jpg", file_date)
+        move_to_next_photo(driver, Direction)
 
 
     while True:
