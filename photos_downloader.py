@@ -109,7 +109,7 @@ def move_to_next_photo(driver, direction):
     time.sleep(0.3)
 
 
-def get_file_name(driver, language):
+def get_file_date_and_name(driver, language):
     """
 
     :param driver: google chrome driver
@@ -134,8 +134,10 @@ def get_file_name(driver, language):
         month = english_months.get(date_as_array[5])
     year = date_as_array[6]
     time = date_as_array[7]
-    file_name = year + ":" + month + ":" + day + " " + time
-    return file_name
+
+    file_date = year + ":" + month + ":" + day + " " + time
+    file_name = day + "_" + month + "_" + year + " " + time.replace(':', '_')
+    return file_date, file_name
 
 
 def save_image_as(name, directory_path, driver, element, index=0):
@@ -153,14 +155,14 @@ def save_image_as(name, directory_path, driver, element, index=0):
         keyboard.write(directory_path)  # C:\Users\galev\OneDrive\Desktop
         time.sleep(0.3)
         keyboard.send('enter')
-        time.sleep(0.25)
+        time.sleep(0.5)
         for i in range(9):
             keyboard.send('tab')
             time.sleep(0.3)
         keyboard.send('enter')
     else:
         keyboard.send('enter')
-    time.sleep(0.5)
+    time.sleep(0.8)
 
 
 def set_metadata(file_path, date_str):
@@ -171,7 +173,7 @@ def set_metadata(file_path, date_str):
     piexif.insert(exif_bytes, file_path)
 
 
-def crawler(url, download_all_photos=True, number_of_photos= 10):
+def crawler(url, download_all_photos=True, number_of_photos=10):
     # initializing parameters and the webdriver and unable google restriction to log in (restriction due to identification of webdriver that runs through selenium)
 
     options = webdriver.ChromeOptions()
@@ -230,11 +232,11 @@ def crawler(url, download_all_photos=True, number_of_photos= 10):
 
 
     for i in range(15):
-        file_date = get_file_name(driver, Language)
-        file_name = file_date.replace(':', "_")
+        file_date, file_name = get_file_date_and_name(driver, Language)
         element = driver.find_element('tag name', 'body')
         save_image_as(file_name, path_str, driver, element, i)
         set_metadata(path_str+"\\"+file_name+".jpg", file_date)
+        time.sleep(0.5)
         move_to_next_photo(driver, Direction)
 
 
