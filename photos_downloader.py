@@ -5,13 +5,10 @@ from selenium import webdriver
 from selenium.webdriver import ActionChains
 from selenium.webdriver.common.by import By
 from selenium.webdriver.common.keys import Keys
-from selenium.webdriver.support.ui import WebDriverWait
-from selenium.webdriver.support import expected_conditions as EC
 import keyboard
 import piexif
-from PIL import Image
 
-# creating global immutable dictionaries of the months in case I accidentally try to chang it
+# creating global immutable dictionaries of the months in case I accidentally try to change it
 
 hebrew_months = {
     "בינו'": "01",
@@ -44,6 +41,7 @@ english_months = {
 }
 
 # TODO: function for making directories according to the month and the year
+
 
 def make_directory(path, directory_name="Google Photos"):
     """
@@ -114,7 +112,8 @@ def get_file_date_and_name(driver, language):
 
     :param driver: google chrome driver
     :param language: the language the date is written.
-    :return: the name of the current photo in this format - YYYY.MM.DD, to be able to sort by name in the directory.
+    :return: file_date - the date and time the photo were taken.
+             file_name -the name of the current photo in this format - YYYY_MM_DD HH:MM:SS.
     """
 
     # # Find the div element by XPath
@@ -162,7 +161,7 @@ def save_image_as(name, directory_path, driver, element, index=0):
         keyboard.send('enter')
     else:
         keyboard.send('enter')
-    time.sleep(0.8)
+    time.sleep(1)
 
 
 def set_metadata(file_path, date_str):
@@ -173,8 +172,12 @@ def set_metadata(file_path, date_str):
     piexif.insert(exif_bytes, file_path)
 
 
-def crawler(url, download_all_photos=True, number_of_photos=10):
-    # initializing parameters and the webdriver and unable google restriction to log in (restriction due to identification of webdriver that runs through selenium)
+# def TODO: add function that checks if that photo exist!
+
+
+def crawler(url, directory_path, download_all_photos=True, number_of_photos=10):
+    # initializing parameters and the webdriver and unable google restriction to log in
+    # (restriction due to identification of webdriver that runs through selenium)
 
     options = webdriver.ChromeOptions()
     options.add_argument("--disable-blink-features=AutomationControlled")
@@ -217,33 +220,37 @@ def crawler(url, download_all_photos=True, number_of_photos=10):
     else:
         Direction = "left"
 
+    # in case the user chooses to download all the photos from the photo he chose.
+    # TODO: check if the while loop really stops
+    if(download_all_photos):
+        previous_url = url
+        current_url = None
+        while previous_url != current_url:
+            previous_url = current_url
 
-    # if(download_all_photos):
-    #     while True:
-    #         #TODO: make a break statment if after moving to the next photo we are still in the same url.
-    #         pass
-    #
-    # else:
-    #     for i in range(number_of_photos):
-    #         #TODO: function that download and save it in the right directory.
+            file_date, file_name = get_file_date_and_name(driver, Language)
+            element = driver.find_element('tag name', 'body')
+            save_image_as(file_name, directory_path, driver, element, i)
+            set_metadata(directory_path + "\\" + file_name + ".jpg", file_date)
+            time.sleep(0.5)
+            move_to_next_photo(driver, Direction)
 
-    path_str = "C:\\Users\\galev\\OneDrive\\Desktop\\Google Photos"
+            current_url = driver.current_url
 
+    # in case that the user chose to download a certain number of photos.
+    else:
+        for i in range(number_of_photos):
+            file_date, file_name = get_file_date_and_name(driver, Language)
+            element = driver.find_element('tag name', 'body')
+            save_image_as(file_name, directory_path, driver, element, i)
+            set_metadata(directory_path + "\\" + file_name + ".jpg", file_date)
+            time.sleep(0.5)
+            move_to_next_photo(driver, Direction)
 
-
-    for i in range(15):
-        file_date, file_name = get_file_date_and_name(driver, Language)
-        element = driver.find_element('tag name', 'body')
-        save_image_as(file_name, path_str, driver, element, i)
-        set_metadata(path_str+"\\"+file_name+".jpg", file_date)
-        time.sleep(0.5)
-        move_to_next_photo(driver, Direction)
-
-
-    while True:
-        time.sleep(0.5)
+    driver.quit()
 
 
 if __name__ == '__main__':
-    crawler("https://photos.google.com/photo/AF1QipPG5bUkHMsthrvYUWJSTFsJ9WhFJY2GWYVsY0Kz")
+    path_str = "C:\\Users\\galev\\OneDrive\\Desktop\\Google Photos"
+    crawler("https://photos.google.com/photo/AF1QipPG5bUkHMsthrvYUWJSTFsJ9WhFJY2GWYVsY0Kz", path_str, False)
 
