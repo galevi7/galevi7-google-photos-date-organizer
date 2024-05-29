@@ -11,18 +11,18 @@ import piexif
 # creating global immutable dictionaries of the months in case I accidentally try to change it
 
 hebrew_months = {
-    "בינו'": "01",
-    "בפבר'": "02",
+    "בינו": "01",
+    "בפבר": "02",
     "במרץ": "03",
-    "באפר'": "04",
+    "באפר": "04",
     "במאי": "05",
     "ביוני": "06",
     "ביולי": "07",
-    "באוג'": "08",
-    "בספט'": "09",
-    "באוק'": "10",
-    "בנוב'": "11",
-    "בדצמ'": "12"
+    "באוג": "08",
+    "בספט": "09",
+    "באוק": "10",
+    "בנוב": "11",
+    "בדצמ": "12"
 }
 
 english_months = {
@@ -40,7 +40,11 @@ english_months = {
     "Dec": "12"
 }
 
-# TODO: function for making directories according to the month and the year
+year_month_directory_dict = {}
+
+duplicate_dates = {}
+
+# TODO: function for setting direction or change some code so the user can pick the direction (older photos or new ones)
 
 
 def make_directory(path, directory_name="Google Photos"):
@@ -55,7 +59,6 @@ def make_directory(path, directory_name="Google Photos"):
 
     if (not directory_exists(complete_path)):
         os.mkdir(fr"{complete_path}")
-        print(f'The directory "{directory_name}" was created successfully in the chosen directory')
         return complete_path
 
     return "-1"
@@ -128,40 +131,58 @@ def get_file_date_and_name(driver, language):
     date_as_array = [word.replace(',', '') for word in date_as_array]
     day = date_as_array[4]
     if language == "hebrew":
-        month = hebrew_months.get(date_as_array[5])
+        month = hebrew_months.get(date_as_array[5].replace('׳', ""))
     else:
-        month = english_months.get(date_as_array[5])
+        month = english_months.get(date_as_array[5].replace('׳', ""))
     year = date_as_array[6]
     time = date_as_array[7]
 
     file_date = year + ":" + month + ":" + day + " " + time
     file_name = day + "_" + month + "_" + year + " " + time.replace(':', '_')
+
     return file_date, file_name
 
 
-def save_image_as(name, directory_path, driver, element, index=0):
+def check_file_name(name, directory_path):
+    """
+    Checks if this file is already exist (rare, but its happens)
+    :param name: file name
+    :param directory_path: the complete path of the directory the file should be in if he exists
+    :return: original name if the file doesn't exist, modified name with counter of that date.
+    """
+    file_path = directory_path + "\\" + name + ".jpg"
+    if os.path.isfile(file_path):
+        same_date_counter = duplicate_dates.get(name, None)
+        if same_date_counter is None:
+            duplicate_dates[name] = 2
+            name = name + "(1)"
+        else:
+            name = name + "(" + str(same_date_counter) + ")"
+            duplicate_dates[name] = same_date_counter + 1
+    return name
+
+
+def save_image_as(name, directory_path, driver, element, is_new_month):
     actions = ActionChains(driver)
     actions.context_click(element).perform()
-
+    time.sleep(0.7)
     keyboard.send('v')
-
-    # Optional: handle the "Save As" dialog if necessary
-    time.sleep(1)  # Adjust delay as needed for dialog to appear
+    time.sleep(1)
     keyboard.write(name)
-    if index == 0:
+    if is_new_month:
         keyboard.send('alt+d')
         # input the right directory
         keyboard.write(directory_path)  # C:\Users\galev\OneDrive\Desktop
         time.sleep(0.3)
         keyboard.send('enter')
-        time.sleep(0.5)
+        time.sleep(1)
         for i in range(9):
             keyboard.send('tab')
-            time.sleep(0.3)
+            time.sleep(0.6)
         keyboard.send('enter')
     else:
         keyboard.send('enter')
-    time.sleep(1)
+    time.sleep(0.65)
 
 
 def set_metadata(file_path, date_str):
@@ -172,7 +193,7 @@ def set_metadata(file_path, date_str):
     piexif.insert(exif_bytes, file_path)
 
 
-# def TODO: add function that checks if that photo exist!
+
 
 
 def crawler(url, directory_path, download_all_photos=True, number_of_photos=10):
@@ -221,7 +242,6 @@ def crawler(url, directory_path, download_all_photos=True, number_of_photos=10):
         Direction = "left"
 
     # in case the user chooses to download all the photos from the photo he chose.
-    # TODO: check if the while loop really stops
     if(download_all_photos):
         previous_url = url
         current_url = None
@@ -229,28 +249,84 @@ def crawler(url, directory_path, download_all_photos=True, number_of_photos=10):
             previous_url = current_url
 
             file_date, file_name = get_file_date_and_name(driver, Language)
+            year = file_date[0:4]
+            month = file_date[5:7]
+            months_set = year_month_directory_dict.get(year, None)
+
+            if months_set is None:
+                year_month_directory_dict[year] = {month}
+                directory_name = year + "." + month
+                current_directory = make_directory(directory_path, directory_name)
+                is_new_month = True
+
+            elif not month in months_set:
+                months_set.add(month)
+                directory_name = year + "." + month
+                current_directory = make_directory(directory_path, directory_name)
+                is_new_month = True
+            else:
+                is_new_month = False
+
             element = driver.find_element('tag name', 'body')
-            save_image_as(file_name, directory_path, driver, element, i)
-            set_metadata(directory_path + "\\" + file_name + ".jpg", file_date)
+            # checking if this date exist
+            file_name = check_file_name(file_name, current_directory)
+
+            save_image_as(file_name, current_directory, driver, element, is_new_month)
+            time.sleep(0.3)
+            set_metadata(current_directory + "\\" + file_name + ".jpg", file_date)
             time.sleep(0.5)
             move_to_next_photo(driver, Direction)
-
+            time.sleep(0.5)
             current_url = driver.current_url
+            time.sleep(0.5)
 
     # in case that the user chose to download a certain number of photos.
     else:
+        current_directory = None
+        previous_url = url
+        current_url = None
         for i in range(number_of_photos):
+
+            if previous_url == current_url:
+                break
+
+            previous_url = current_url
+
             file_date, file_name = get_file_date_and_name(driver, Language)
+            year = file_date[0:4]
+            month = file_date[5:7]
+            months_set = year_month_directory_dict.get(year, None)
+
+            if months_set is None:
+                year_month_directory_dict[year] = {month}
+                directory_name = year + "." + month
+                current_directory = make_directory(directory_path, directory_name)
+                is_new_month = True
+
+            elif not month in months_set:
+                months_set.add(month)
+                directory_name = year + "." + month
+                current_directory = make_directory(directory_path, directory_name)
+                is_new_month = True
+            else:
+                is_new_month = False
+
+
             element = driver.find_element('tag name', 'body')
-            save_image_as(file_name, directory_path, driver, element, i)
-            set_metadata(directory_path + "\\" + file_name + ".jpg", file_date)
+            file_name = check_file_name(file_name, current_directory)
+            save_image_as(file_name, current_directory, driver, element, is_new_month)
+            time.sleep(0.3)
+            set_metadata(current_directory + "\\" + file_name + ".jpg", file_date)
             time.sleep(0.5)
             move_to_next_photo(driver, Direction)
+            time.sleep(0.5)
+            current_url = driver.current_url
+
 
     driver.quit()
 
 
 if __name__ == '__main__':
     path_str = "C:\\Users\\galev\\OneDrive\\Desktop\\Google Photos"
-    crawler("https://photos.google.com/photo/AF1QipPG5bUkHMsthrvYUWJSTFsJ9WhFJY2GWYVsY0Kz", path_str, False)
+    crawler("https://photos.google.com/photo/AF1QipMRlIuPvTMqWv1LFN1IDrHwfhNA2-AOS_q6YGDu", path_str, False)
 
