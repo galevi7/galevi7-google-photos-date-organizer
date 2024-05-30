@@ -46,6 +46,8 @@ duplicate_dates = {}
 
 # TODO: function for setting direction or change some code so the user can pick the direction (older photos or new ones)
 
+# TODO: consider adding feature of downloading in time window between dd/mm/yyyy-dd/mm/yyyy
+
 
 def make_directory(path, directory_name="Google Photos"):
     """
@@ -193,6 +195,48 @@ def set_metadata(file_path, date_str):
     piexif.insert(exif_bytes, file_path)
 
 
+def download_and_save_image(driver, Language, directory_path, Direction, current_directory):
+    """
+    The function unify and uses all the functions that we use for downloading the files, creating directories,
+    getting the dates and etc, in the right order.
+    :param driver: chrome driver
+    :param Language: the Language of the driver (english/hebrew)
+    :param directory_path: the main directory that all the sub-directories will be created in
+    :param Direction: the direction of the next photo (older photos or newer).
+    :param current_directory: the directory we saved in last time.
+    """
+    file_date, file_name = get_file_date_and_name(driver, Language)
+    year = file_date[0:4]
+    month = file_date[5:7]
+    months_set = year_month_directory_dict.get(year, None)
+
+    if months_set is None:
+        year_month_directory_dict[year] = {month}
+        directory_name = year + "." + month
+        current_directory = make_directory(directory_path, directory_name)
+        is_new_month = True
+
+    elif not month in months_set:
+        months_set.add(month)
+        directory_name = year + "." + month
+        current_directory = make_directory(directory_path, directory_name)
+        is_new_month = True
+    else:
+        is_new_month = False
+
+    element = driver.find_element('tag name', 'body')
+    # checking if this date exist
+    file_name = check_file_name(file_name, current_directory)
+
+    save_image_as(file_name, current_directory, driver, element, is_new_month)
+    time.sleep(0.3)
+    set_metadata(current_directory + "\\" + file_name + ".jpg", file_date)
+    time.sleep(0.5)
+    move_to_next_photo(driver, Direction)
+    time.sleep(0.5)
+    return current_directory
+
+
 
 
 
@@ -241,44 +285,17 @@ def crawler(url, directory_path, download_all_photos=True, number_of_photos=10):
     else:
         Direction = "left"
 
+    current_directory = None
+
     # in case the user chooses to download all the photos from the photo he chose.
     if(download_all_photos):
         previous_url = url
         current_url = None
         while previous_url != current_url:
             previous_url = current_url
-
-            file_date, file_name = get_file_date_and_name(driver, Language)
-            year = file_date[0:4]
-            month = file_date[5:7]
-            months_set = year_month_directory_dict.get(year, None)
-
-            if months_set is None:
-                year_month_directory_dict[year] = {month}
-                directory_name = year + "." + month
-                current_directory = make_directory(directory_path, directory_name)
-                is_new_month = True
-
-            elif not month in months_set:
-                months_set.add(month)
-                directory_name = year + "." + month
-                current_directory = make_directory(directory_path, directory_name)
-                is_new_month = True
-            else:
-                is_new_month = False
-
-            element = driver.find_element('tag name', 'body')
-            # checking if this date exist
-            file_name = check_file_name(file_name, current_directory)
-
-            save_image_as(file_name, current_directory, driver, element, is_new_month)
-            time.sleep(0.3)
-            set_metadata(current_directory + "\\" + file_name + ".jpg", file_date)
-            time.sleep(0.5)
-            move_to_next_photo(driver, Direction)
-            time.sleep(0.5)
+            current_directory = download_and_save_image(driver, Language, directory_path, Direction, current_directory)
             current_url = driver.current_url
-            time.sleep(0.5)
+
 
     # in case that the user chose to download a certain number of photos.
     else:
@@ -291,35 +308,7 @@ def crawler(url, directory_path, download_all_photos=True, number_of_photos=10):
                 break
 
             previous_url = current_url
-
-            file_date, file_name = get_file_date_and_name(driver, Language)
-            year = file_date[0:4]
-            month = file_date[5:7]
-            months_set = year_month_directory_dict.get(year, None)
-
-            if months_set is None:
-                year_month_directory_dict[year] = {month}
-                directory_name = year + "." + month
-                current_directory = make_directory(directory_path, directory_name)
-                is_new_month = True
-
-            elif not month in months_set:
-                months_set.add(month)
-                directory_name = year + "." + month
-                current_directory = make_directory(directory_path, directory_name)
-                is_new_month = True
-            else:
-                is_new_month = False
-
-
-            element = driver.find_element('tag name', 'body')
-            file_name = check_file_name(file_name, current_directory)
-            save_image_as(file_name, current_directory, driver, element, is_new_month)
-            time.sleep(0.3)
-            set_metadata(current_directory + "\\" + file_name + ".jpg", file_date)
-            time.sleep(0.5)
-            move_to_next_photo(driver, Direction)
-            time.sleep(0.5)
+            current_directory = download_and_save_image(driver, Language, directory_path, Direction, current_directory)
             current_url = driver.current_url
 
 
@@ -328,5 +317,5 @@ def crawler(url, directory_path, download_all_photos=True, number_of_photos=10):
 
 if __name__ == '__main__':
     path_str = "C:\\Users\\galev\\OneDrive\\Desktop\\Google Photos"
-    crawler("https://photos.google.com/photo/AF1QipMRlIuPvTMqWv1LFN1IDrHwfhNA2-AOS_q6YGDu", path_str, False)
+    crawler("https://photos.google.com/photo/AF1QipMRlIuPvTMqWv1LFN1IDrHwfhNA2-AOS_q6YGDu", path_str)
 
