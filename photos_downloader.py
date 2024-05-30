@@ -44,6 +44,7 @@ year_month_directory_dict = {}
 
 duplicate_dates = {}
 
+
 # TODO: function for setting direction or change some code so the user can pick the direction (older photos or new ones)
 
 # TODO: consider adding feature of downloading in time window between dd/mm/yyyy-dd/mm/yyyy
@@ -59,7 +60,7 @@ def make_directory(path, directory_name="Google Photos"):
     # creating the complete path of the new directory
     complete_path = path + "\\" + directory_name
 
-    if (not directory_exists(complete_path)):
+    if not directory_exists(complete_path):
         os.mkdir(fr"{complete_path}")
         return complete_path
 
@@ -195,17 +196,18 @@ def set_metadata(file_path, date_str):
     piexif.insert(exif_bytes, file_path)
 
 
-def download_and_save_image(driver, Language, directory_path, Direction, current_directory):
+def download_and_save_image(driver, language, directory_path, Direction, current_directory):
     """
     The function unify and uses all the functions that we use for downloading the files, creating directories,
     getting the dates and etc, in the right order.
     :param driver: chrome driver
-    :param Language: the Language of the driver (english/hebrew)
+    :param language: the Language of the driver (english/hebrew)
     :param directory_path: the main directory that all the sub-directories will be created in
     :param Direction: the direction of the next photo (older photos or newer).
     :param current_directory: the directory we saved in last time.
+    :return: current current_directory
     """
-    file_date, file_name = get_file_date_and_name(driver, Language)
+    file_date, file_name = get_file_date_and_name(driver, language)
     year = file_date[0:4]
     month = file_date[5:7]
     months_set = year_month_directory_dict.get(year, None)
@@ -216,7 +218,7 @@ def download_and_save_image(driver, Language, directory_path, Direction, current
         current_directory = make_directory(directory_path, directory_name)
         is_new_month = True
 
-    elif not month in months_set:
+    elif month not in months_set:
         months_set.add(month)
         directory_name = year + "." + month
         current_directory = make_directory(directory_path, directory_name)
@@ -237,10 +239,26 @@ def download_and_save_image(driver, Language, directory_path, Direction, current
     return current_directory
 
 
+def set_direction(language, older_photos):
+    """
+    A function that sets the direction we're scrolling the photos.
+    :param language: the Language of the driver (english/hebrew)
+    :param older_photos: is the user wants to download photos that were taken before that photo
+    :return: the Direction.
+    """
+    if language == "hebrew":
+        if older_photos:
+            return "left"
+        else:
+            return "right"
+    else:
+        if older_photos:
+            return "right"
+        else:
+            return "left"
 
 
-
-def crawler(url, directory_path, download_all_photos=True, number_of_photos=10):
+def crawler(url, directory_path, older_photos=True, download_all_photos=True, number_of_photos=10):
     # initializing parameters and the webdriver and unable google restriction to log in
     # (restriction due to identification of webdriver that runs through selenium)
 
@@ -280,22 +298,18 @@ def crawler(url, directory_path, download_all_photos=True, number_of_photos=10):
 
     Language = get_language(driver, url)
 
-    if Language == "english":
-        Direction = "right"
-    else:
-        Direction = "left"
+    Direction = set_direction(Language, older_photos)
 
     current_directory = None
 
     # in case the user chooses to download all the photos from the photo he chose.
-    if(download_all_photos):
+    if download_all_photos:
         previous_url = url
         current_url = None
         while previous_url != current_url:
             previous_url = current_url
             current_directory = download_and_save_image(driver, Language, directory_path, Direction, current_directory)
             current_url = driver.current_url
-
 
     # in case that the user chose to download a certain number of photos.
     else:
@@ -311,11 +325,9 @@ def crawler(url, directory_path, download_all_photos=True, number_of_photos=10):
             current_directory = download_and_save_image(driver, Language, directory_path, Direction, current_directory)
             current_url = driver.current_url
 
-
     driver.quit()
 
 
 if __name__ == '__main__':
     path_str = "C:\\Users\\galev\\OneDrive\\Desktop\\Google Photos"
     crawler("https://photos.google.com/photo/AF1QipMRlIuPvTMqWv1LFN1IDrHwfhNA2-AOS_q6YGDu", path_str)
-
