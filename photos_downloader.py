@@ -7,6 +7,7 @@ from selenium.webdriver.common.by import By
 from selenium.webdriver.common.keys import Keys
 import keyboard
 import piexif
+import pyperclip
 
 # creating global immutable dictionaries of the months in case I accidentally try to change it
 
@@ -122,7 +123,7 @@ def get_file_date_and_name(driver, language):
              file_name -the name of the current photo in this format - YYYY_MM_DD HH:MM:SS.
     """
 
-    # # Find the div element by XPath
+    # Find the div element by XPath
     div_element = driver.find_element(By.XPATH, "//div[@aria-live='assertive']")
 
     # Extract the innerHTML of the div element
@@ -138,56 +139,63 @@ def get_file_date_and_name(driver, language):
     else:
         month = english_months.get(date_as_array[5].replace('׳', ""))
     year = date_as_array[6]
-    time = date_as_array[7]
+    exact_time = date_as_array[7]
 
-    file_date = year + ":" + month + ":" + day + " " + time
-    file_name = day + "_" + month + "_" + year + " " + time.replace(':', '_')
-
+    file_date = year + ":" + month + ":" + day + " " + exact_time
+    file_name = day + "_" + month + "_" + year + " " + exact_time.replace(':', '_')
     return file_date, file_name
 
 
 def check_file_name(name, directory_path):
     """
-    Checks if this file is already exist (rare, but its happens)
+    Checks if this file is already exist, it's not efficient because I'm assuming that someone can add the same picture
+    not on the same session, besides there's shouldn't be many pictures that are taken at the same exact time!
     :param name: file name
     :param directory_path: the complete path of the directory the file should be in if he exists
     :return: original name if the file doesn't exist, modified name with counter of that date.
     """
     file_path = directory_path + "\\" + name + ".jpg"
-    if os.path.isfile(file_path):
-        same_date_counter = duplicate_dates.get(name, None)
-        if same_date_counter is None:
-            duplicate_dates[name] = 2
-            name = name + "(1)"
-        else:
-            name = name + "(" + str(same_date_counter) + ")"
-            duplicate_dates[name] = same_date_counter + 1
-    return name
+    image_count = 0
+    while os.path.isfile(file_path):
+        image_count += 1
+        file_path = directory_path + "\\" + name + f"({image_count}).jpg"
+    if image_count == 0:
+        return name
+    return name + f"({image_count})"
 
 
 def save_image_as(name, directory_path, driver, element, is_new_month):
     actions = ActionChains(driver)
     actions.context_click(element).perform()
-    time.sleep(0.7)
+    time.sleep(0.5)
     keyboard.send('v')
-    time.sleep(1)
+    time.sleep(0.5)
     keyboard.write(name)
-    if is_new_month:
-        keyboard.send('alt+d')
-        # input the right directory
-        keyboard.write(directory_path)  # C:\Users\galev\OneDrive\Desktop
+    time.sleep(0.5)
+    keyboard.send('alt+d')
+    time.sleep(0.5)
+    keyboard.send('ctrl+c')
+    time.sleep(0.5)
+    if pyperclip.paste() == directory_path:
+        keyboard.send('enter')
+        time.sleep(0.5)
+        keyboard.send('enter')
+        time.sleep(0.5)
+    else:
+    # input the right directory
+        keyboard.write(directory_path)
+        time.sleep(0.5)
+        keyboard.send('enter')
+        time.sleep(0.5)
+        keyboard.send('enter')
+        time.sleep(0.5)
+        keyboard.send('enter')
         time.sleep(0.3)
         keyboard.send('enter')
-        time.sleep(1)
-        for i in range(9):
-            keyboard.send('tab')
-            time.sleep(0.6)
-        keyboard.send('enter')
-    else:
-        keyboard.send('enter')
-    time.sleep(0.65)
+        time.sleep(0.7)
 
 
+# setting the date of the picture to be the actual time the photo was taken.
 def set_metadata(file_path, date_str):
     exif_dict = piexif.load(file_path)
     exif_dict["Exif"][piexif.ExifIFD.DateTimeOriginal] = date_str.encode("utf-8")
@@ -196,7 +204,7 @@ def set_metadata(file_path, date_str):
     piexif.insert(exif_bytes, file_path)
 
 
-def download_and_save_image(driver, language, directory_path, Direction, current_directory):
+def download_and_save_image(driver, language, directory_path, direction, current_directory):
     """
     The function unify and uses all the functions that we use for downloading the files, creating directories,
     getting the dates and etc, in the right order.
@@ -205,23 +213,17 @@ def download_and_save_image(driver, language, directory_path, Direction, current
     :param directory_path: the main directory that all the sub-directories will be created in
     :param Direction: the direction of the next photo (older photos or newer).
     :param current_directory: the directory we saved in last time.
-    :return: current current_directory
+    :return: current_directory
     """
     file_date, file_name = get_file_date_and_name(driver, language)
     year = file_date[0:4]
     month = file_date[5:7]
-    months_set = year_month_directory_dict.get(year, None)
+    directory_name = year + "." + month
+    current_directory = directory_path + "\\" + directory_name
+    # months_set = year_month_directory_dict.get(year, None)
 
-    if months_set is None:
-        year_month_directory_dict[year] = {month}
-        directory_name = year + "." + month
-        current_directory = make_directory(directory_path, directory_name)
-        is_new_month = True
-
-    elif month not in months_set:
-        months_set.add(month)
-        directory_name = year + "." + month
-        current_directory = make_directory(directory_path, directory_name)
+    if not directory_exists(current_directory):
+        os.mkdir(fr"{current_directory}")
         is_new_month = True
     else:
         is_new_month = False
@@ -231,10 +233,10 @@ def download_and_save_image(driver, language, directory_path, Direction, current
     file_name = check_file_name(file_name, current_directory)
 
     save_image_as(file_name, current_directory, driver, element, is_new_month)
-    time.sleep(0.3)
+    time.sleep(1)
     set_metadata(current_directory + "\\" + file_name + ".jpg", file_date)
     time.sleep(0.5)
-    move_to_next_photo(driver, Direction)
+    move_to_next_photo(driver, direction)
     time.sleep(0.5)
     return current_directory
 
@@ -329,5 +331,6 @@ def crawler(url, directory_path, older_photos=True, download_all_photos=True, nu
 
 
 if __name__ == '__main__':
+    make_directory("C:\\Users\\galev\\OneDrive\\Desktop")
     path_str = "C:\\Users\\galev\\OneDrive\\Desktop\\Google Photos"
-    crawler("https://photos.google.com/photo/AF1QipMRlIuPvTMqWv1LFN1IDrHwfhNA2-AOS_q6YGDu", path_str)
+    crawler("https://photos.google.com/photo/AF1QipMRlIuPvTMqWv1LFN1IDrHwfhNA2-AOS_q6YGDu", path_str, False, False)
