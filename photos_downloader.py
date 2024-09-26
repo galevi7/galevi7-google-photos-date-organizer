@@ -8,6 +8,7 @@ from selenium.webdriver.common.keys import Keys
 import keyboard
 import piexif
 import pyperclip
+import pyautogui
 
 # creating global immutable dictionaries of the months in case I accidentally try to change it
 
@@ -114,6 +115,16 @@ def move_to_next_photo(driver, direction):
     time.sleep(0.3)
 
 
+def delete_photo():
+    for i in range(13):
+        time.sleep(0.35)
+        keyboard.send('tab')
+    time.sleep(0.35)
+    keyboard.send('enter')
+    time.sleep(0.35)
+    keyboard.send('enter')
+
+
 def get_file_date_and_name(driver, language):
     """
 
@@ -204,15 +215,15 @@ def set_metadata(file_path, date_str):
     piexif.insert(exif_bytes, file_path)
 
 
-def download_and_save_image(driver, language, directory_path, direction, current_directory):
+def download_and_save_image(driver, language, directory_path, direction, delete):
     """
     The function unify and uses all the functions that we use for downloading the files, creating directories,
     getting the dates and etc, in the right order.
     :param driver: chrome driver
     :param language: the Language of the driver (english/hebrew)
     :param directory_path: the main directory that all the sub-directories will be created in
-    :param Direction: the direction of the next photo (older photos or newer).
-    :param current_directory: the directory we saved in last time.
+    :param direction: the direction of the next photo (older photos or newer).
+    :param delete: are we deleting the photo
     :return: current_directory
     """
     file_date, file_name = get_file_date_and_name(driver, language)
@@ -236,6 +247,9 @@ def download_and_save_image(driver, language, directory_path, direction, current
     time.sleep(1)
     set_metadata(current_directory + "\\" + file_name + ".jpg", file_date)
     time.sleep(0.5)
+    if delete:
+        delete_photo()
+        time.sleep(0.35)
     move_to_next_photo(driver, direction)
     time.sleep(0.5)
     return current_directory
@@ -260,7 +274,7 @@ def set_direction(language, older_photos):
             return "left"
 
 
-def crawler(url, directory_path, older_photos=True, download_all_photos=True, number_of_photos=10):
+def crawler(url, directory_path, older_photos=True, download_all_photos=True, number_of_photos=10, delete=False):
     # initializing parameters and the webdriver and unable google restriction to log in
     # (restriction due to identification of webdriver that runs through selenium)
 
@@ -311,6 +325,8 @@ def crawler(url, directory_path, older_photos=True, download_all_photos=True, nu
         while previous_url != current_url:
             previous_url = current_url
             current_directory = download_and_save_image(driver, Language, directory_path, Direction, current_directory)
+            if delete:
+                delete_photo()
             current_url = driver.current_url
 
     # in case that the user chose to download a certain number of photos.
@@ -325,6 +341,8 @@ def crawler(url, directory_path, older_photos=True, download_all_photos=True, nu
 
             previous_url = current_url
             current_directory = download_and_save_image(driver, Language, directory_path, Direction, current_directory)
+            if delete:
+                delete_photo()
             current_url = driver.current_url
 
     driver.quit()
@@ -333,4 +351,4 @@ def crawler(url, directory_path, older_photos=True, download_all_photos=True, nu
 if __name__ == '__main__':
     make_directory("C:\\Users\\galev\\OneDrive\\Desktop")
     path_str = "C:\\Users\\galev\\OneDrive\\Desktop\\Google Photos"
-    crawler("https://photos.google.com/photo/AF1QipMRlIuPvTMqWv1LFN1IDrHwfhNA2-AOS_q6YGDu", path_str, False, False)
+    crawler("https://photos.google.com/photo/AF1QipOsNhzIUF8UAu4eiiVA7mhFeYCXFzIW422j2qn9", path_str, False, False, 1)
