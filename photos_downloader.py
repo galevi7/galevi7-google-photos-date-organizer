@@ -116,12 +116,12 @@ def move_to_next_photo(driver, direction):
 
 
 def delete_photo():
-    for i in range(13):
-        time.sleep(0.35)
-        keyboard.send('tab')
-    time.sleep(0.35)
+    for i in range(2):
+        time.sleep(0.2)
+        keyboard.send('shift+tab')
+    time.sleep(0.25)
     keyboard.send('enter')
-    time.sleep(0.35)
+    time.sleep(0.25)
     keyboard.send('enter')
 
 
@@ -178,15 +178,15 @@ def check_file_name(name, directory_path):
 def save_image_as(name, directory_path, driver, element, is_new_month):
     actions = ActionChains(driver)
     actions.context_click(element).perform()
-    time.sleep(0.5)
+    time.sleep(0.65)
     keyboard.send('v')
-    time.sleep(0.5)
+    time.sleep(1)
     keyboard.write(name)
-    time.sleep(0.5)
+    time.sleep(0.65)
     keyboard.send('alt+d')
-    time.sleep(0.5)
+    time.sleep(0.65)
     keyboard.send('ctrl+c')
-    time.sleep(0.5)
+    time.sleep(0.65)
     if pyperclip.paste() == directory_path:
         keyboard.send('enter')
         time.sleep(0.5)
@@ -195,13 +195,13 @@ def save_image_as(name, directory_path, driver, element, is_new_month):
     else:
     # input the right directory
         keyboard.write(directory_path)
-        time.sleep(0.5)
+        time.sleep(0.65)
         keyboard.send('enter')
-        time.sleep(0.5)
+        time.sleep(0.65)
         keyboard.send('enter')
-        time.sleep(0.5)
+        time.sleep(0.65)
         keyboard.send('enter')
-        time.sleep(0.3)
+        time.sleep(0.65)
         keyboard.send('enter')
         time.sleep(0.7)
 
@@ -310,7 +310,7 @@ def crawler(url, directory_path, older_photos=True, download_all_photos=True, nu
 
     # Waiting until the user correctly logged-in and letting the driver sleep and not overload the cpu.
     while driver.current_url != url:
-        time.sleep(0.2)
+        time.sleep(0.1)
 
     Language = get_language(driver, url)
 
@@ -351,4 +351,4 @@ def crawler(url, directory_path, older_photos=True, download_all_photos=True, nu
 if __name__ == '__main__':
     make_directory("C:\\Users\\galev\\OneDrive\\Desktop")
     path_str = "C:\\Users\\galev\\OneDrive\\Desktop\\Google Photos"
-    crawler("https://photos.google.com/photo/AF1QipOsNhzIUF8UAu4eiiVA7mhFeYCXFzIW422j2qn9", path_str, False, False, 1)
+    crawler("https://photos.google.com/photo/AF1QipOsNhzIUF8UAu4eiiVA7mhFeYCXFzIW422j2qn9", path_str, False, False, 1, True)
