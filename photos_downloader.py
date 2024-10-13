@@ -8,7 +8,6 @@ from selenium.webdriver.common.keys import Keys
 import keyboard
 import piexif
 import pyperclip
-import pyautogui
 
 # creating global immutable dictionaries of the months in case I accidentally try to change it
 
@@ -71,7 +70,7 @@ def make_directory(path, directory_name="Google Photos"):
 
 def directory_exists(directory_path):
     if os.path.isdir(directory_path):
-        print(f"The directory '{directory_path}' exists.")
+        # print(f"The directory '{directory_path}' exists.")
         return True
     return False
 
@@ -126,10 +125,25 @@ def delete_photo():
     keyboard.send('enter')
     time.sleep(0.9)
     keyboard.send('enter')
-    time.sleep(0.9)
-    keyboard.send('enter')
-    time.sleep(0.9)
+    time.sleep(1.3)
 
+
+def is_video(driver):
+    # Use single quotes for the XPATH string to avoid conflict with double quotes
+    print("before div_element")
+    keyboard.send("i")
+    time.sleep(0.8)
+    parent_element = driver.find_element(By.XPATH, '/html/body/div[1]')
+
+    # Get the innerHTML or text content of the parent element
+    parent_content = parent_element.text
+    keyboard.send("i")
+    time.sleep(0.8)
+    # print(parent_content)
+    # Check if the last 3 characters of the name are ".mp" (which could be for mp4, mp3, etc.)
+    if ".mp4" in parent_content:
+        return True
+    return False
 
 def get_file_date_and_name(driver, language):
     """
@@ -184,7 +198,7 @@ def check_file_name(name, directory_path):
 def save_image_as(name, directory_path, driver, element, is_new_month):
     actions = ActionChains(driver)
     actions.context_click(element).perform()
-    time.sleep(0.65)
+    time.sleep(1)
     keyboard.send('v')
     time.sleep(1)
     keyboard.write(name)
@@ -285,6 +299,7 @@ def crawler(url, directory_path, older_photos=True, download_all_photos=True, nu
     # (restriction due to identification of webdriver that runs through selenium)
 
     options = webdriver.ChromeOptions()
+    # options.add_argument("user-data-dir=C:\\Users\\galev\\AppData\\Local\\Google\\Chrome\\User Data")
     options.add_argument("--disable-blink-features=AutomationControlled")
     options.add_experimental_option("useAutomationExtension", False)
     options.add_experimental_option("excludeSwitches", ["enable-automation"])
@@ -300,7 +315,7 @@ def crawler(url, directory_path, older_photos=True, download_all_photos=True, nu
     for i in range(len(useragentarray)):
         # Setting user agent iteratively as Chrome 108 and 107
         driver.execute_cdp_cmd("Network.setUserAgentOverride", {"userAgent": useragentarray[i]})
-        print(driver.execute_script("return navigator.userAgent;"))
+        # print(driver.execute_script("return navigator.userAgent;"))
 
     # entering the photo we got from the user.
     driver.get(url)
@@ -330,16 +345,24 @@ def crawler(url, directory_path, older_photos=True, download_all_photos=True, nu
         current_url = None
         while previous_url != current_url:
             previous_url = current_url
-            time.sleep(1.5)
+            if is_video(driver):
+                move_to_next_photo(driver, Direction)
+                time.sleep(1)
+                current_url = driver.current_url
+                continue
+
             current_directory = download_and_save_image(driver, Language, directory_path, Direction, current_directory)
+            time.sleep(1)
+
             if delete:
                 delete_photo()
                 time.sleep(2)
                 if not older_photos:
-                    previous_url = current_url
+                    previous_url = driver.current_url
                     time.sleep(2)
                     move_to_next_photo(driver, Direction)
                     time.sleep(2)
+
             current_url = driver.current_url
 
     # in case that the user chose to download a certain number of photos.
@@ -353,11 +376,18 @@ def crawler(url, directory_path, older_photos=True, download_all_photos=True, nu
                 break
 
             previous_url = current_url
+            if is_video(driver):
+                move_to_next_photo(driver, Direction)
+                time.sleep(1)
+                current_url = driver.current_url
+                continue
+
+
             current_directory = download_and_save_image(driver, Language, directory_path, Direction, current_directory)
             if delete:
                 delete_photo()
                 if not older_photos:
-                    previous_url = current_url
+                    previous_url = driver.current_url
                     move_to_next_photo(driver, Direction)
                     time.sleep(0.5)
             current_url = driver.current_url
@@ -368,4 +398,4 @@ def crawler(url, directory_path, older_photos=True, download_all_photos=True, nu
 if __name__ == '__main__':
     make_directory("C:\\Users\\galev\\OneDrive\\Desktop")
     path_str = "C:\\Users\\galev\\OneDrive\\Desktop\\Google Photos"
-    crawler("https://photos.google.com/photo/AF1QipMKi4VoBSGb-IbCDK2AzMfBplc68fQ-usCXW6Gh", path_str, False, True, 3, True)
+    crawler("https://photos.google.com/photo/AF1QipOwC-3bxz910FdtDPY5b7WZ4Dtd9CnmotO-NlHa", path_str, False, True, 3, True)
