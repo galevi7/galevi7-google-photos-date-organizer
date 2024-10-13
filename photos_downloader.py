@@ -100,14 +100,17 @@ def get_language(driver, url):
         return "hebrew"
 
 
+# TODO: add saving previous photo for delete photo will stop
 def move_to_next_photo(driver, direction):
     """
     moving to the next photo.
     :param driver: chrome webdriver
     :param direction: the direction of the next photo (according to the language)
     """
+    actions = ActionChains(driver)
     element = driver.find_element('tag name', 'body')
     time.sleep(0.3)
+    actions.click(element).perform()
     if direction == "right":
         element.send_keys(Keys.ARROW_RIGHT)
     else:
@@ -250,9 +253,9 @@ def download_and_save_image(driver, language, directory_path, direction, delete)
     time.sleep(1)
     set_metadata(current_directory + "\\" + file_name + ".jpg", file_date)
     time.sleep(0.5)
-    if delete:
-        delete_photo()
-        time.sleep(0.35)
+    # if delete:
+    #     delete_photo()
+    #     time.sleep(0.35)
     # move_to_next_photo(driver, direction)
     # time.sleep(0.5)
     return current_directory
@@ -267,14 +270,14 @@ def set_direction(language, older_photos):
     """
     if language == "hebrew":
         if older_photos:
-            return "left"
+            return "left", "right"
         else:
-            return "right"
+            return "right", "left"
     else:
         if older_photos:
-            return "right"
+            return "right", "left"
         else:
-            return "left"
+            return "left", "right"
 
 
 def crawler(url, directory_path, older_photos=True, download_all_photos=True, number_of_photos=10, delete=False):
@@ -317,7 +320,7 @@ def crawler(url, directory_path, older_photos=True, download_all_photos=True, nu
 
     Language = get_language(driver, url)
 
-    Direction = set_direction(Language, older_photos)
+    Direction, opposite_direction = set_direction(Language, older_photos)
 
     current_directory = None
 
@@ -327,12 +330,16 @@ def crawler(url, directory_path, older_photos=True, download_all_photos=True, nu
         current_url = None
         while previous_url != current_url:
             previous_url = current_url
+            time.sleep(1.5)
             current_directory = download_and_save_image(driver, Language, directory_path, Direction, current_directory)
             if delete:
                 delete_photo()
+                time.sleep(2)
                 if not older_photos:
+                    previous_url = current_url
+                    time.sleep(2)
                     move_to_next_photo(driver, Direction)
-                    time.sleep(0.5)
+                    time.sleep(2)
             current_url = driver.current_url
 
     # in case that the user chose to download a certain number of photos.
@@ -350,6 +357,7 @@ def crawler(url, directory_path, older_photos=True, download_all_photos=True, nu
             if delete:
                 delete_photo()
                 if not older_photos:
+                    previous_url = current_url
                     move_to_next_photo(driver, Direction)
                     time.sleep(0.5)
             current_url = driver.current_url
@@ -360,4 +368,4 @@ def crawler(url, directory_path, older_photos=True, download_all_photos=True, nu
 if __name__ == '__main__':
     make_directory("C:\\Users\\galev\\OneDrive\\Desktop")
     path_str = "C:\\Users\\galev\\OneDrive\\Desktop\\Google Photos"
-    crawler("https://photos.google.com/photo/AF1QipNAn3HAdhNrz1TE7oXgqd6WAh0e4cxQOUqWRwQe", path_str, False, False, 3, True)
+    crawler("https://photos.google.com/photo/AF1QipMKi4VoBSGb-IbCDK2AzMfBplc68fQ-usCXW6Gh", path_str, False, True, 3, True)
