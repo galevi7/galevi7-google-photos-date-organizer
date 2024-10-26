@@ -81,6 +81,11 @@ def get_language(driver, url):
     :param url: the url of the first photo we want to download
     :return: the language the profile is using.
     """
+    # driver.get('https://www.google.com')
+    #TODO: check hebrew and english and return the language according to that.
+    # Use JavaScript to retrieve the browser language
+    language = driver.execute_script("return navigator.language || navigator.userLanguage;")
+    print(f"Browser Language: {language}")
     element = driver.find_element('tag name', 'body')
     time.sleep(0.3)
     element.send_keys(Keys.ARROW_LEFT)
@@ -166,6 +171,7 @@ def is_video(driver):
         size = get_file_size(parent_content)
         return True, size
     return False, size
+
 
 def get_file_date_and_name(driver, language):
     """
@@ -370,12 +376,7 @@ def download_and_collect_data(driver, language, directory_path, video_size, is_v
     original_name = parent_content.split("\n")[8]
     ready_files[original_name] = (file_name, designated_directory_path)
     time.sleep(1)
-    set_metadata(designated_directory_path + "\\" + file_name + ".jpg", file_date)
-    time.sleep(0.5)
-    # if delete:
-    #     delete_photo()
-    #     time.sleep(0.35)
-    # move_to_next_photo(driver, direction)
+    # set_metadata(designated_directory_path + "\\" + file_name + ".jpg", file_date)
     # time.sleep(0.5)
     return designated_directory_path
 
@@ -399,14 +400,17 @@ def set_direction(language, older_photos):
             return "left", "right"
 
 
-def get_download_directory(driver):
+def get_download_directory(driver, language):
     driver.get('chrome://settings/downloads')
     element = driver.find_element('tag name', 'settings-ui')
     time.sleep(1)
     shadow_root = get_shadow_root(driver, element)
     shadow_root_text = shadow_root.find_element(By.CSS_SELECTOR, "#main").text
     text_as_array = shadow_root_text.split('\n')
-    path_index = text_as_array.index('location') + 1
+    if language == "english":
+        path_index = text_as_array.index('Location') + 1
+    else:
+        path_index = text_as_array.index('מיקום') + 1
     return text_as_array[path_index]
     #TODO: finish and check this in hebrew and in english that I get the path right
 
@@ -452,16 +456,17 @@ def crawler(url, directory_path, older_photos=True, download_all_photos=True, nu
     time.sleep(0.5)
     keyboard.send('enter')
     time.sleep(7)
-    download_directory = get_download_directory(driver)
+    language = get_language(driver, url)
+    download_directory = get_download_directory(driver, language)
     time.sleep(0.5)
     driver.get(url)
     # Waiting until the user correctly logged-in and letting the driver sleep and not overload the cpu.
     while driver.current_url != url:
         time.sleep(0.1)
 
-    Language = get_language(driver, url)
+    # Language = get_language(driver, url)
 
-    Direction, opposite_direction = set_direction(Language, older_photos)
+    Direction, opposite_direction = set_direction(language, older_photos)
 
     current_directory = None
 
@@ -479,7 +484,7 @@ def crawler(url, directory_path, older_photos=True, download_all_photos=True, nu
             #     continue
 
             # download_and_save_file(driver, Language, directory_path, video_size, is_file_video)
-            download_and_collect_data(driver, Language, directory_path, video_size, is_file_video)
+            download_and_collect_data(driver, language, directory_path, video_size, is_file_video)
             time.sleep(1)
             if delete:
                 delete_photo()
@@ -510,7 +515,7 @@ def crawler(url, directory_path, older_photos=True, download_all_photos=True, nu
             #     continue
 
             is_file_video, video_size = is_video(driver)
-            download_and_save_file(driver, Language, directory_path, video_size, is_file_video)
+            download_and_save_file(driver, language, directory_path, video_size, is_file_video)
             if delete:
                 delete_photo()
                 if not older_photos:
