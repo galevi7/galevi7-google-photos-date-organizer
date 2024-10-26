@@ -86,6 +86,9 @@ def get_language(driver, url):
     # Use JavaScript to retrieve the browser language
     language = driver.execute_script("return navigator.language || navigator.userLanguage;")
     print(f"Browser Language: {language}")
+    if language[0:2] == "en":
+        return "english"
+
     element = driver.find_element('tag name', 'body')
     time.sleep(0.3)
     element.send_keys(Keys.ARROW_LEFT)
