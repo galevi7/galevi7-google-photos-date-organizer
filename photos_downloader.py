@@ -1,4 +1,5 @@
 import os
+import shutil
 import time
 from selenium import webdriver
 from selenium.webdriver import ActionChains
@@ -72,6 +73,9 @@ def directory_exists(directory_path):
     return False
 
 
+
+
+
 def get_language(driver, url):
     """
     Moving to the next image and the go back, only then the date are visible in the HTMLand we can determine if the
@@ -104,7 +108,6 @@ def get_language(driver, url):
         return "hebrew"
 
 
-# TODO: add saving previous photo for delete photo will stop
 def move_to_next_photo(driver, direction):
     """
     moving to the next photo.
@@ -116,8 +119,6 @@ def move_to_next_photo(driver, direction):
     time.sleep(0.3)
     actions.click(element).perform()
     time.sleep(0.3)
-    element.send_keys(Keys.SHIFT + 'd')
-    time.sleep(0.3)
     if direction == "right":
         element.send_keys(Keys.ARROW_RIGHT)
     else:
@@ -125,15 +126,14 @@ def move_to_next_photo(driver, direction):
     time.sleep(0.3)
 
 
-def delete_photo():
-    for i in range(2):
-        time.sleep(0.4)
-        keyboard.send('shift+tab')
+def delete_photo(driver):
+    element = driver.find_element('tag name', 'body')
+    element.click()
     time.sleep(0.5)
-    keyboard.send('enter')
-    time.sleep(0.9)
-    keyboard.send('enter')
-    time.sleep(1.3)
+    element.send_keys(Keys.SHIFT+'#')
+    time.sleep(2)
+    driver.switch_to.active_element.send_keys(Keys.ENTER)
+    time.sleep(2)
 
 
 def get_file_size(file_details):
@@ -196,9 +196,8 @@ def get_file_date_and_name(driver, language):
     date_as_array = date.split()
     date_as_array = [word.replace(',', '') for word in date_as_array]
     day = date_as_array[4]
-    if language == "hebrew":
-        month = hebrew_months.get(date_as_array[5].replace('׳', ""))
-    else:
+    month = hebrew_months.get(date_as_array[5].replace('׳', ""))
+    if month is None:
         month = english_months.get(date_as_array[5].replace('׳', ""))
     year = date_as_array[6]
     exact_time = date_as_array[7]
@@ -208,7 +207,7 @@ def get_file_date_and_name(driver, language):
     return file_date, file_name
 
 
-def check_file_name(name, directory_path):
+def check_file_name(name, directory_path, is_video):
     """
     Checks if this file is already exist, it's not efficient because I'm assuming that someone can add the same picture
     not on the same session, besides there's shouldn't be many pictures that are taken at the same exact time!
@@ -216,11 +215,15 @@ def check_file_name(name, directory_path):
     :param directory_path: the complete path of the directory the file should be in if he exists
     :return: original name if the file doesn't exist, modified name with counter of that date.
     """
-    file_path = directory_path + "\\" + name + ".jpg"
+    if is_video:
+        suffix = ".mp4"
+    else:
+        suffix = ".jpg"
+    file_path = directory_path + "\\" + name #+ suffix
     image_count = 0
     while os.path.isfile(file_path):
         image_count += 1
-        file_path = directory_path + "\\" + name + f"({image_count}).jpg"
+        file_path = directory_path + "\\" + name + f"({image_count})" #+ suffix
     if image_count == 0:
         return name
     return name + f"({image_count})"
@@ -341,47 +344,70 @@ def download_and_save_file(driver, language, directory_path, video_size, is_vide
     return current_directory
 
 
-def download_and_collect_data(driver, language, directory_path, video_size, is_video=False):
+def rename_and_move(downloads_directory, original_name):
+    file_tuple = ready_files.get(original_name)
+    file_name = file_tuple[0]
+    directory_path = file_tuple[1]
+    is_video = file_tuple[2]
+    file_date = file_tuple[3]
+    if not directory_exists(directory_path):
+        os.mkdir(fr"{directory_path}")
+    file_name = check_file_name(file_name, directory_path, is_video)
+    old_name_path = downloads_directory + "\\" + original_name
+    if is_video:
+        suffix = ".mp4"
+    else:
+        suffix = ".jpg"
+    new_name_path = directory_path + "\\" + file_name + suffix
+    shutil.move(old_name_path, new_name_path)
+    # shutil.move(fr'{downloads_directory + file_name}', directory_path)
+    set_metadata(new_name_path, file_date)
+
+
+def download_and_collect_data(driver, language, directory_path):
     """
     The function unify and uses all the functions that we use for downloading the files, creating directories,
     getting the dates and etc, in the right order.
-    :param video_size: video size in MB
     :param driver: chrome driver
     :param language: the Language of the driver (english/hebrew)
-    :param directory_path: the main directory that all the sub-directories will be created in
-    :param is_video: is the file is video
+    :param directory_path: the main directory that all the subdirectories will be created in
     :return: current_directory
     """
+    element = driver.find_element('tag name', 'body')
+    time.sleep(1)
     file_date, file_name = get_file_date_and_name(driver, language)
     year = file_date[0:4]
     month = file_date[5:7]
     directory_name = year + "." + month
     designated_directory_path = directory_path + "\\" + directory_name
-
-    if not directory_exists(designated_directory_path):
-        os.mkdir(fr"{designated_directory_path}")
-        is_new_month = True
-    else:
-        is_new_month = False
-
-    element = driver.find_element('tag name', 'body')
     # checking if this date exist
-    file_name = check_file_name(file_name, designated_directory_path)
+    # file_name = check_file_name(file_name, designated_directory_path)
     # saving according to file format
     element.send_keys('i')
     time.sleep(0.8)
     parent_element = driver.find_element(By.XPATH, '/html/body/div[1]')
-
     # Get the innerHTML or text content of the parent element
     parent_content = parent_element.text
-    size = 0
+    element.send_keys(Keys.SHIFT + 'd')
     element.send_keys('i')
-    original_name = parent_content.split("\n")[8]
-    ready_files[original_name] = (file_name, designated_directory_path)
-    time.sleep(1)
-    # set_metadata(designated_directory_path + "\\" + file_name + ".jpg", file_date)
-    # time.sleep(0.5)
-    return designated_directory_path
+    # Check if the last 3 characters of the name are ".mp" (which could be for mp4, mp3, etc.)
+    is_video = ".mp4" in parent_content
+    parent_text = parent_content.split("\n")
+    if is_video:
+        for line in parent_text:
+            if line[-3:] == "mp4":
+                original_name = line
+                break
+    else:
+        for line in parent_text:
+            if line[-3:] == "jpg":
+                original_name = line
+                break
+
+    ready_files[original_name] = (file_name, designated_directory_path, is_video, file_date)
+    time.sleep(0.5)
+
+    return original_name
 
 
 def set_direction(language, older_photos):
@@ -430,6 +456,7 @@ def crawler(url, directory_path, older_photos=True, download_all_photos=True, nu
     options = webdriver.ChromeOptions()
     # options.add_argument("user-data-dir=C:\\Users\\galev\\AppData\\Local\\Google\\Chrome\\User Data")
     options.add_argument("--disable-blink-features=AutomationControlled")
+    options.add_argument("--lang=he")
     options.add_experimental_option("useAutomationExtension", False)
     options.add_experimental_option("excludeSwitches", ["enable-automation"])
     driver = webdriver.Chrome(options=options)
@@ -458,9 +485,9 @@ def crawler(url, directory_path, older_photos=True, download_all_photos=True, nu
     keyboard.write(password)
     time.sleep(0.5)
     keyboard.send('enter')
-    time.sleep(7)
-    language = get_language(driver, url)
-    download_directory = get_download_directory(driver, language)
+    time.sleep(15)
+    # language = get_language(driver, url)
+    download_directory = get_download_directory(driver, "hebrew")
     time.sleep(0.5)
     driver.get(url)
     # Waiting until the user correctly logged-in and letting the driver sleep and not overload the cpu.
@@ -469,9 +496,11 @@ def crawler(url, directory_path, older_photos=True, download_all_photos=True, nu
 
     # Language = get_language(driver, url)
 
-    Direction, opposite_direction = set_direction(language, older_photos)
+    # moving back and forth to reveal data
+    Direction, opposite_direction = set_direction("hebrew", older_photos)
+    move_to_next_photo(driver, Direction)
+    move_to_next_photo(driver, opposite_direction)
 
-    current_directory = None
 
     # in case the user chooses to download all the photos from the photo he chose.
     if download_all_photos:
@@ -487,10 +516,10 @@ def crawler(url, directory_path, older_photos=True, download_all_photos=True, nu
             #     continue
 
             # download_and_save_file(driver, Language, directory_path, video_size, is_file_video)
-            download_and_collect_data(driver, language, directory_path, video_size, is_file_video)
+            download_and_collect_data(driver, "hebrew", directory_path)
             time.sleep(1)
             if delete:
-                delete_photo()
+                delete_photo(driver)
                 time.sleep(2)
                 if not older_photos:
                     previous_url = driver.current_url
@@ -517,14 +546,16 @@ def crawler(url, directory_path, older_photos=True, download_all_photos=True, nu
             #     current_url = driver.current_url
             #     continue
 
-            is_file_video, video_size = is_video(driver)
-            download_and_save_file(driver, language, directory_path, video_size, is_file_video)
+            # is_file_video, video_size = is_video(driver)
+            # download_and_save_file(driver, Language, directory_path, video_size, is_file_video)
+            original_name = download_and_collect_data(driver, "hebrew", directory_path)
             if delete:
-                delete_photo()
+                delete_photo(driver)
                 if not older_photos:
                     previous_url = driver.current_url
                     move_to_next_photo(driver, Direction)
                     time.sleep(0.5)
+            rename_and_move(download_directory, original_name)
             current_url = driver.current_url
 
     driver.quit()
@@ -533,6 +564,5 @@ def crawler(url, directory_path, older_photos=True, download_all_photos=True, nu
 if __name__ == '__main__':
     make_directory("C:\\Users\\galev\\OneDrive\\Desktop")
     path_str = "C:\\Users\\galev\\OneDrive\\Desktop\\Google Photos"
-    #TODO: need to find out the download location using this - chrome://settings/downloads
-    crawler("https://photos.google.com/photo/AF1QipMs-n5y58hHKXuNCHCVVSVOHUI7jLyLBG4qd-5z", path_str,
-            True, True, 1, True, 'galevi403', 'Gal140921Tehila')
+    crawler("https://photos.google.com/photo/AF1QipOHd5Z-gMuMUxXd9zj0QHEl13-L1dCGw4txRUZS", path_str,
+            True, False, 3, True, 'galevi403', 'Gal140921Tehila')
