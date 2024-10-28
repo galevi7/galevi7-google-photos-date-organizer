@@ -1,13 +1,3 @@
-import java.io.File;
-import java.io.IOException;
-import java.nio.file.Files;
-import java.nio.file.Path;
-import java.nio.file.Paths;
-import java.nio.file.StandardCopyOption;
-import java.util.HashMap;
-import java.util.Map;
-import java.util.concurrent.TimeUnit;
-
 import org.openqa.selenium.By;
 import org.openqa.selenium.Keys;
 import org.openqa.selenium.WebDriver;
@@ -15,45 +5,54 @@ import org.openqa.selenium.WebElement;
 import org.openqa.selenium.chrome.ChromeDriver;
 import org.openqa.selenium.chrome.ChromeOptions;
 import org.openqa.selenium.interactions.Actions;
-import org.openqa.selenium.remote.RemoteWebElement;
+
+import java.io.File;
+import java.io.IOException;
+import java.nio.file.Files;
+import java.nio.file.Paths;
+import java.nio.file.StandardCopyOption;
+import java.util.HashMap;
+import java.util.Map;
+import java.util.concurrent.TimeUnit;
 
 public class PhotoDownloader {
 
     // Creating global immutable dictionaries of the months
-    private static final Map<String, String> hebrewMonths = Map.of(
-        "בינו", "01",
-        "בפבר", "02",
-        "במרץ", "03",
-        "באפר", "04",
-        "במאי", "05",
-        "ביוני", "06",
-        "ביולי", "07",
-        "באוג", "08",
-        "בספט", "09",
-        "באוק", "10",
-        "בנוב", "11",
-        "בדצמ", "12"
+    private static final Map<String, String> hebrewMonths = Map.ofEntries(
+            Map.entry("בינו", "01"),
+            Map.entry("בפבר", "02"),
+            Map.entry("במרץ", "03"),
+            Map.entry("באפר", "04"),
+            Map.entry("במאי", "05"),
+            Map.entry("ביוני", "06"),
+            Map.entry("ביולי", "07"),
+            Map.entry("באוג", "08"),
+            Map.entry("בספט", "09"),
+            Map.entry("באוק", "10"),
+            Map.entry("בנוב", "11"),
+            Map.entry("בדצמ", "12")
     );
 
-    private static final Map<String, String> englishMonths = Map.of(
-        "Jan", "01",
-        "Feb", "02",
-        "Mar", "03",
-        "Apr", "04",
-        "May", "05",
-        "Jun", "06",
-        "Jul", "07",
-        "Aug", "08",
-        "Sept", "09",
-        "Oct", "10",
-        "Nov", "11",
-        "Dec", "12"
+    private static final Map<String, String> englishMonths = Map.ofEntries(
+            Map.entry("Jan", "01"),
+            Map.entry("Feb", "02"),
+            Map.entry("Mar", "03"),
+            Map.entry("Apr", "04"),
+            Map.entry("May", "05"),
+            Map.entry("Jun", "06"),
+            Map.entry("Jul", "07"),
+            Map.entry("Aug", "08"),
+            Map.entry("Sept", "09"),
+            Map.entry("Oct", "10"),
+            Map.entry("Nov", "11"),
+            Map.entry("Dec", "12")
     );
 
     private static final Map<String, Object[]> readyFiles = new HashMap<>();
 
     public static void main(String[] args) {
-        makeDirectory("C:\\Users\\galev\\OneDrive\\Desktop");
+        System.out
+        makeDirectory("C:\\Users\\galev\\OneDrive\\Desktop", "Google Photos");
         String pathStr = "C:\\Users\\galev\\OneDrive\\Desktop\\Google Photos";
         crawler("https://photos.google.com/photo/AF1QipOHd5Z-gMuMUxXd9zj0QHEl13-L1dCGw4txRUZS", pathStr,
                 true, false, 3, true, "galevi403", "Gal140921Tehila");
