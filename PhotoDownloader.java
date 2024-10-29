@@ -1,7 +1,4 @@
-import org.openqa.selenium.By;
-import org.openqa.selenium.Keys;
-import org.openqa.selenium.WebDriver;
-import org.openqa.selenium.WebElement;
+import org.openqa.selenium.*;
 import org.openqa.selenium.chrome.ChromeDriver;
 import org.openqa.selenium.chrome.ChromeOptions;
 import org.openqa.selenium.interactions.Actions;
@@ -11,13 +8,39 @@ import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Paths;
 import java.nio.file.StandardCopyOption;
-import java.util.HashMap;
-import java.util.Map;
+import java.util.*;
 import java.util.concurrent.TimeUnit;
 
 public class PhotoDownloader {
 
-    // Creating global immutable dictionaries of the months
+    private WebDriver driver;
+
+    /**
+     * init function that sets the webDriver will use with the options and arguments we want for this project.
+     */
+    public PhotoDownloader() {
+        ChromeOptions options = new ChromeOptions();
+        options.addArguments("--disable-blink-features=AutomationControlled");
+        options.addArguments("--lang=he");
+        options.setExperimentalOption("useAutomationExtension", false);
+        options.setExperimentalOption("excludeSwitches", new String[]{"enable-automation"});
+
+//        String[] useragentarray = {
+//                "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/108.0.0.0 Safari/537.36",
+//                "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/107.0.0.0 Safari/537.36",
+//        };
+//
+//        for (String userAgent : useragentarray) {
+//            options.addArguments("--user-agent=" + userAgent);
+//        }
+
+        this.driver = new ChromeDriver(options);
+
+        // Remove navigator.webdriver to avoid detection
+        ((JavascriptExecutor) driver).executeScript("Object.defineProperty(navigator, 'webdriver', {get: () => undefined})");
+    }
+
+    // Creating dictionaries of the months that maps the words to numbers (in strings)
     private static final Map<String, String> hebrewMonths = Map.ofEntries(
             Map.entry("בינו", "01"),
             Map.entry("בפבר", "02"),
@@ -50,22 +73,28 @@ public class PhotoDownloader {
 
     private static final Map<String, Object[]> readyFiles = new HashMap<>();
 
-    public static void main(String[] args) {
-        System.out
-        makeDirectory("C:\\Users\\galev\\OneDrive\\Desktop", "Google Photos");
-        String pathStr = "C:\\Users\\galev\\OneDrive\\Desktop\\Google Photos";
-        crawler("https://photos.google.com/photo/AF1QipOHd5Z-gMuMUxXd9zj0QHEl13-L1dCGw4txRUZS", pathStr,
-                true, false, 3, true, "galevi403", "Gal140921Tehila");
-    }
+//    public static void main(String[] args) {
+//        makeDirectory("C:\\Users\\galev\\OneDrive\\Desktop", "Google Photos");
+//        String pathStr = "C:\\Users\\galev\\OneDrive\\Desktop\\Google Photos";
+//        crawler("https://photos.google.com/photo/AF1QipOHd5Z-gMuMUxXd9zj0QHEl13-L1dCGw4txRUZS", pathStr,
+//                true, false, 3, true, "galevi403", "Gal140921Tehila");
+//    }
 
     public static String makeDirectory(String path, String directoryName) {
         String completePath = path + "\\" + directoryName;
         File directory = new File(completePath);
         if (!directory.exists()) {
             directory.mkdir();
-            return completePath;
         }
-        return "-1";
+        else {
+            System.out.println("Directory already exists");
+        }
+        return completePath;
+    }
+
+
+    public void killDriver(){
+        this.driver.quit();
     }
 
     public static boolean directoryExists(String directoryPath) {
@@ -74,7 +103,7 @@ public class PhotoDownloader {
     }
 
     public static String getLanguage(WebDriver driver, String url) {
-        String language = (String) driver.executeScript("return navigator.language || navigator.userLanguage;");
+        String language = (String) ((JavascriptExecutor)driver).executeScript("return navigator.language || navigator.userLanguage;");
         System.out.println("Browser Language: " + language);
         if (language.startsWith("en")) {
             return "english";
@@ -455,31 +484,18 @@ public class PhotoDownloader {
         WebElement shadowRoot = getShadowRoot(driver, element);
         String shadowRootText = shadowRoot.findElement(By.cssSelector("#main")).getText();
         String[] textAsArray = shadowRootText.split("\n");
-        int pathIndex = language.equals("english") ? textAsArray.indexOf("Location") + 1 : textAsArray.indexOf("מיקום") + 1;
+        List<String> textAsList = Arrays.asList(textAsArray);
+
+        int pathIndex = language.equals("english") ? textAsList.indexOf("Location") + 1 : textAsList.indexOf("מיקום") + 1;
         return textAsArray[pathIndex];
     }
 
     public static WebElement getShadowRoot(WebDriver driver, WebElement element) {
-        return (WebElement) driver.executeScript("return arguments[0].shadowRoot", element);
+        return (WebElement) ((JavascriptExecutor)driver).executeScript("return arguments[0].shadowRoot", element);
     }
 
-    public static void crawler(String url, String directoryPath, boolean olderPhotos, boolean downloadAllPhotos, int numberOfPhotos, boolean delete, String username, String password) {
-        ChromeOptions options = new ChromeOptions();
-        options.addArguments("--disable-blink-features=AutomationControlled");
-        options.addArguments("--lang=he");
-        options.setExperimentalOption("useAutomationExtension", false);
-        options.setExperimentalOption("excludeSwitches", new String[]{"enable-automation"});
-        WebDriver driver = new ChromeDriver(options);
-        driver.executeScript("Object.defineProperty(navigator, 'webdriver', {get: () => undefined})");
+    public void crawler(String url, String directoryPath, boolean olderPhotos, boolean downloadAllPhotos, int numberOfPhotos, boolean delete, String username, String password) {
 
-        String[] useragentarray = {
-            "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/108.0.0.0 Safari/537.36",
-            "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/107.0.0.0 Safari/537.36",
-        };
-
-        for (String userAgent : useragentarray) {
-            driver.executeCdpCommand("Network.setUserAgentOverride", Map.of("userAgent", userAgent));
-        }
 
         try {
             TimeUnit.SECONDS.sleep(1);
