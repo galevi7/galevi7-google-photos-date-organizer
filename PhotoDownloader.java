@@ -481,17 +481,23 @@ public class PhotoDownloader {
         } catch (InterruptedException e) {
             e.printStackTrace();
         }
-        WebElement shadowRoot = getShadowRoot(driver, element);
-        String shadowRootText = shadowRoot.findElement(By.cssSelector("#main")).getText();
+        Object shadowRoot = getShadowRoot(driver, element);
+
+// Find the element inside the shadow root using JavaScript
+        WebElement shadowElement = (WebElement) ((JavascriptExecutor) driver)
+                .executeScript("return arguments[0].querySelector('#main')", shadowRoot);
+
+// Get the text from the found element
+        String shadowRootText = shadowElement.getText();
+//        String shadowRootText = shadowRoot.findElement(By.cssSelector("#main")).getText();
         String[] textAsArray = shadowRootText.split("\n");
         List<String> textAsList = Arrays.asList(textAsArray);
-
         int pathIndex = language.equals("english") ? textAsList.indexOf("Location") + 1 : textAsList.indexOf("מיקום") + 1;
         return textAsArray[pathIndex];
     }
 
-    public static WebElement getShadowRoot(WebDriver driver, WebElement element) {
-        return (WebElement) ((JavascriptExecutor)driver).executeScript("return arguments[0].shadowRoot", element);
+    public static Object getShadowRoot(WebDriver driver, WebElement element) {
+        return ((JavascriptExecutor) driver).executeScript("return arguments[0].shadowRoot", element);
     }
 
     public void crawler(String url, String directoryPath, boolean olderPhotos, boolean downloadAllPhotos, int numberOfPhotos, boolean delete, String username, String password) {
@@ -505,23 +511,13 @@ public class PhotoDownloader {
         driver.get(url);
 
         // Simulate keyboard input
+
         try {
-            TimeUnit.SECONDS.sleep(1);
+            TimeUnit.SECONDS.sleep(20);
         } catch (InterruptedException e) {
             e.printStackTrace();
         }
-        // Simulate keyboard input
-        try {
-            TimeUnit.SECONDS.sleep(1);
-        } catch (InterruptedException e) {
-            e.printStackTrace();
-        }
-        // Simulate keyboard input
-        try {
-            TimeUnit.SECONDS.sleep(1);
-        } catch (InterruptedException e) {
-            e.printStackTrace();
-        }
+
         String downloadDirectory = getDownloadDirectory(driver, "hebrew");
         try {
             TimeUnit.SECONDS.sleep(1);
