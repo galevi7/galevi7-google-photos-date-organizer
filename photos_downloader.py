@@ -8,6 +8,7 @@ from selenium.webdriver.common.keys import Keys
 import keyboard
 import piexif
 import pyperclip
+import multiprocessing
 
 # creating global immutable dictionaries of the months in case I accidentally try to change it
 
@@ -327,7 +328,7 @@ def download_and_save_file(driver, language, directory_path, video_size, is_vide
 
     element = driver.find_element('tag name', 'body')
     # checking if this date exist
-    file_name = check_file_name(file_name, current_directory)
+    file_name = check_file_name(file_name, current_directory, is_video)
     # saving according to file format
     if is_video:
         save_video_as(file_name, current_directory, driver, video_size)
@@ -396,18 +397,18 @@ def download_and_collect_data(driver, language, directory_path):
     if is_video:
         for line in parent_text:
             if line[-3:] == "mp4":
-                original_name = line
+                original_file_name = line
                 break
     else:
         for line in parent_text:
             if line[-3:] == "jpg":
-                original_name = line
+                original_file_name = line
                 break
 
-    ready_files[original_name] = (file_name, designated_directory_path, is_video, file_date)
+    ready_files[original_file_name] = (file_name, designated_directory_path, is_video, file_date)
     time.sleep(0.5)
 
-    return original_name
+    return original_file_name
 
 
 def set_direction(language, older_photos):
@@ -523,7 +524,7 @@ def crawler(url, directory_path, older_photos=True, download_all_photos=True, nu
                 time.sleep(2)
                 if not older_photos:
                     previous_url = driver.current_url
-                    time.sleep(2)
+                    time.sleep(0.5)
                     move_to_next_photo(driver, Direction)
                     time.sleep(2)
 
@@ -564,5 +565,5 @@ def crawler(url, directory_path, older_photos=True, download_all_photos=True, nu
 if __name__ == '__main__':
     make_directory("C:\\Users\\galev\\OneDrive\\Desktop")
     path_str = "C:\\Users\\galev\\OneDrive\\Desktop\\Google Photos"
-    crawler("https://photos.google.com/photo/AF1QipMGBthVpcukeZsSbjQzvZtCde9M8QvSQxmGKAH4", path_str,
-            True, False, 3, True, 'galevi403', 'Gal140921Tehila')
+    crawler("https://photos.google.com/photo/AF1QipPAANMypHAamS9LdlpcjHFHUM0vdZMirWfYyTLs", path_str,
+            True, False, 10, True, 'galevi403', 'Gal140921Tehila')
