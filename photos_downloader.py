@@ -10,8 +10,10 @@ import piexif
 import pyperclip
 import multiprocessing
 
-# creating global immutable dictionaries of the months in case I accidentally try to change it
 
+###### global parameteres for general usage ######
+
+# creating global immutable dictionaries of the months for transferring month suffix into month number.
 hebrew_months = {
     "בינו": "01",
     "בפבר": "02",
@@ -44,11 +46,7 @@ english_months = {
 
 ready_files = {}
 
-
-# TODO: function for setting direction or change some code so the user can pick the direction (older photos or new ones)
-
-# TODO: consider adding feature of downloading in time window between dd/mm/yyyy-dd/mm/yyyy
-
+########## functions for general usage and potential features ##########
 
 def make_directory(path, directory_name="Google Photos"):
     """
@@ -74,7 +72,27 @@ def directory_exists(directory_path):
     return False
 
 
+def get_file_size(file_details):
+    size_start = file_details.find('(') + 1
+    size_end = file_details.find(')', size_start)
 
+    size_str = file_details[size_start:size_end].strip()  # Extract size string
+
+    # Split size and unit
+    size_value, size_unit = size_str.split(' ')
+    size_value = float(size_value)
+    size_unit = size_unit.upper()
+
+    # Convert to MB if needed
+    if size_unit == 'MB':
+        return size_value
+    elif size_unit == 'GB':
+        return size_value * 1024
+    else:
+        return size_value / 1024
+
+
+########### functions for usage of 1st process - downloading and collect data ###########
 
 
 def get_language(driver, url):
@@ -137,27 +155,6 @@ def delete_photo(driver):
     time.sleep(2)
 
 
-def get_file_size(file_details):
-    size_start = file_details.find('(') + 1
-    size_end = file_details.find(')', size_start)
-
-    size_str = file_details[size_start:size_end].strip()  # Extract size string
-
-    # Split size and unit
-    size_value, size_unit = size_str.split(' ')
-    size_value = float(size_value)
-    size_unit = size_unit.upper()
-
-    # Convert to MB if needed
-    if size_unit == 'MB':
-        return size_value
-    elif size_unit == 'GB':
-        return size_value * 1024
-    else:
-        return size_value / 1024
-
-
-
 def is_video(driver):
     # Use single quotes for the XPATH string to avoid conflict with double quotes
     keyboard.send("i")
@@ -214,6 +211,7 @@ def check_file_name(name, directory_path, is_video):
     not on the same session, besides there's shouldn't be many pictures that are taken at the same exact time!
     :param name: file name
     :param directory_path: the complete path of the directory the file should be in if he exists
+    :param is_video: boolean parameter that indicates if the file is a video
     :return: original name if the file doesn't exist, modified name with counter of that date.
     """
     if is_video:
@@ -228,141 +226,6 @@ def check_file_name(name, directory_path, is_video):
     if image_count == 0:
         return name
     return name + f"({image_count})"
-
-
-def save_image_as(name, directory_path, driver, element):
-    actions = ActionChains(driver)
-    actions.context_click(element).perform()
-    time.sleep(1)
-    keyboard.send('v')
-    time.sleep(2)
-    keyboard.write(name)
-    time.sleep(0.8)
-    keyboard.send('alt+d')
-    time.sleep(0.8)
-    keyboard.send('ctrl+c')
-    time.sleep(0.8)
-    if pyperclip.paste() == directory_path:
-        keyboard.send('enter')
-        time.sleep(0.7)
-        keyboard.send('enter')
-        time.sleep(0.7)
-    else:
-    # input the right directory
-        keyboard.write(directory_path)
-        time.sleep(0.65)
-        keyboard.send('enter')
-        time.sleep(0.65)
-        keyboard.send('enter')
-        time.sleep(0.65)
-        keyboard.send('enter')
-        time.sleep(0.65)
-        keyboard.send('enter')
-        time.sleep(0.7)
-
-
-def save_video_as(name, directory_path, driver, video_size):
-    actions = ActionChains(driver)
-    keyboard.send('shift+d')
-    time.sleep(1)
-    keyboard.send('ctrl+j')
-
-    time.sleep(10)
-    time.sleep(0.8)
-    for i in range(5):
-        keyboard.send('tab')
-        time.sleep(2)
-    keyboard.send('enter')
-    time.sleep(2)
-    keyboard.press_and_release('f2')
-    time.sleep(2)
-    keyboard.write(name)
-    time.sleep(2)
-    keyboard.send('enter')
-    time.sleep(2)
-    keyboard.send('ctrl+x')
-    time.sleep(2)
-    keyboard.send('alt+d')
-    time.sleep(2)
-    # input the right directory
-    keyboard.write(directory_path)
-    time.sleep(2)
-    keyboard.send('enter')
-    time.sleep(2)
-    keyboard.send('ctrl+v')
-    time.sleep(2)
-    keyboard.send('alt+f4')
-    time.sleep(2)
-    keyboard.send('ctrl+w')
-    time.sleep(2)
-
-
-# setting the date of the picture to be the actual time the photo was taken.
-def set_metadata(file_path, date_str):
-    exif_dict = piexif.load(file_path)
-    exif_dict["Exif"][piexif.ExifIFD.DateTimeOriginal] = date_str.encode("utf-8")
-    exif_dict["Exif"][piexif.ExifIFD.DateTimeDigitized] = date_str.encode("utf-8")
-    exif_bytes = piexif.dump(exif_dict)
-    piexif.insert(exif_bytes, file_path)
-
-
-def download_and_save_file(driver, language, directory_path, video_size, is_video=False):
-    """
-    The function unify and uses all the functions that we use for downloading the files, creating directories,
-    getting the dates and etc, in the right order.
-    :param video_size: video size in MB
-    :param driver: chrome driver
-    :param language: the Language of the driver (english/hebrew)
-    :param directory_path: the main directory that all the sub-directories will be created in
-    :param is_video: is the file is video
-    :return: current_directory
-    """
-    file_date, file_name = get_file_date_and_name(driver, language)
-    year = file_date[0:4]
-    month = file_date[5:7]
-    directory_name = year + "." + month
-    current_directory = directory_path + "\\" + directory_name
-
-    if not directory_exists(current_directory):
-        os.mkdir(fr"{current_directory}")
-
-    element = driver.find_element('tag name', 'body')
-    # checking if this date exist
-    file_name = check_file_name(file_name, current_directory, is_video)
-    # saving according to file format
-    if is_video:
-        save_video_as(file_name, current_directory, driver, video_size)
-    else:
-        save_image_as(file_name, current_directory, driver, element)
-    time.sleep(1)
-    set_metadata(current_directory + "\\" + file_name + ".jpg", file_date)
-    time.sleep(0.5)
-    # if delete:
-    #     delete_photo()
-    #     time.sleep(0.35)
-    # move_to_next_photo(driver, direction)
-    # time.sleep(0.5)
-    return current_directory
-
-
-def rename_and_move(downloads_directory, original_name):
-    file_tuple = ready_files.get(original_name)
-    file_name = file_tuple[0]
-    directory_path = file_tuple[1]
-    is_video = file_tuple[2]
-    file_date = file_tuple[3]
-    if not directory_exists(directory_path):
-        os.mkdir(fr"{directory_path}")
-    file_name = check_file_name(file_name, directory_path, is_video)
-    old_name_path = downloads_directory + "\\" + original_name
-    if is_video:
-        suffix = ".mp4"
-    else:
-        suffix = ".jpg"
-    new_name_path = directory_path + "\\" + file_name + suffix
-    shutil.move(old_name_path, new_name_path)
-    # shutil.move(fr'{downloads_directory + file_name}', directory_path)
-    set_metadata(new_name_path, file_date)
 
 
 def download_and_collect_data(driver, language, directory_path):
@@ -410,7 +273,6 @@ def download_and_collect_data(driver, language, directory_path):
 
     return original_file_name
 
-
 def set_direction(language, older_photos):
     """
     A function that sets the direction we're scrolling the photos.
@@ -442,13 +304,13 @@ def get_download_directory(driver, language):
     else:
         path_index = text_as_array.index('מיקום') + 1
     return text_as_array[path_index]
-    #TODO: finish and check this in hebrew and in english that I get the path right
-
 
 
 def get_shadow_root(driver, element):
     return driver.execute_script('return arguments[0].shadowRoot', element)
 
+
+##### the main function for the 1st process ####
 def crawler(url, directory_path, older_photos=True, download_all_photos=True, number_of_photos=10, delete=False,
             username="", password=""):
     # initializing parameters and the webdriver and unable google restriction to log in
@@ -560,6 +422,156 @@ def crawler(url, directory_path, older_photos=True, download_all_photos=True, nu
             current_url = driver.current_url
 
     driver.quit()
+
+
+
+### those functions are for single process (not in use) ###
+def save_image_as(name, directory_path, driver, element):
+    actions = ActionChains(driver)
+    actions.context_click(element).perform()
+    time.sleep(1)
+    keyboard.send('v')
+    time.sleep(2)
+    keyboard.write(name)
+    time.sleep(0.8)
+    keyboard.send('alt+d')
+    time.sleep(0.8)
+    keyboard.send('ctrl+c')
+    time.sleep(0.8)
+    if pyperclip.paste() == directory_path:
+        keyboard.send('enter')
+        time.sleep(0.7)
+        keyboard.send('enter')
+        time.sleep(0.7)
+    else:
+    # input the right directory
+        keyboard.write(directory_path)
+        time.sleep(0.65)
+        keyboard.send('enter')
+        time.sleep(0.65)
+        keyboard.send('enter')
+        time.sleep(0.65)
+        keyboard.send('enter')
+        time.sleep(0.65)
+        keyboard.send('enter')
+        time.sleep(0.7)
+
+
+def save_video_as(name, directory_path, driver, video_size):
+    actions = ActionChains(driver)
+    keyboard.send('shift+d')
+    time.sleep(1)
+    keyboard.send('ctrl+j')
+
+    time.sleep(10)
+    time.sleep(0.8)
+    for i in range(5):
+        keyboard.send('tab')
+        time.sleep(2)
+    keyboard.send('enter')
+    time.sleep(2)
+    keyboard.press_and_release('f2')
+    time.sleep(2)
+    keyboard.write(name)
+    time.sleep(2)
+    keyboard.send('enter')
+    time.sleep(2)
+    keyboard.send('ctrl+x')
+    time.sleep(2)
+    keyboard.send('alt+d')
+    time.sleep(2)
+    # input the right directory
+    keyboard.write(directory_path)
+    time.sleep(2)
+    keyboard.send('enter')
+    time.sleep(2)
+    keyboard.send('ctrl+v')
+    time.sleep(2)
+    keyboard.send('alt+f4')
+    time.sleep(2)
+    keyboard.send('ctrl+w')
+    time.sleep(2)
+
+
+def download_and_save_file(driver, language, directory_path, video_size, is_video=False):
+    """
+    The function unify and uses all the functions that we use for downloading the files, creating directories,
+    getting the dates and etc, in the right order.
+    :param video_size: video size in MB
+    :param driver: chrome driver
+    :param language: the Language of the driver (english/hebrew)
+    :param directory_path: the main directory that all the sub-directories will be created in
+    :param is_video: is the file is video
+    :return: current_directory
+    """
+    file_date, file_name = get_file_date_and_name(driver, language)
+    year = file_date[0:4]
+    month = file_date[5:7]
+    directory_name = year + "." + month
+    current_directory = directory_path + "\\" + directory_name
+
+    if not directory_exists(current_directory):
+        os.mkdir(fr"{current_directory}")
+
+    element = driver.find_element('tag name', 'body')
+    # checking if this date exist
+    file_name = check_file_name(file_name, current_directory, is_video)
+    # saving according to file format
+    if is_video:
+        save_video_as(file_name, current_directory, driver, video_size)
+    else:
+        save_image_as(file_name, current_directory, driver, element)
+    time.sleep(1)
+    set_metadata(current_directory + "\\" + file_name + ".jpg", file_date)
+    time.sleep(0.5)
+    # if delete:
+    #     delete_photo()
+    #     time.sleep(0.35)
+    # move_to_next_photo(driver, direction)
+    # time.sleep(0.5)
+    return current_directory
+
+
+################ functions for the 3rd process ####################
+def rename_and_move(downloads_directory, original_name):
+    """
+    the function rename the original name of the file to the date the photo were taken.
+    :param downloads_directory: the path of the downloads directory chosen by the user
+    :param original_name: the original name of the file given by google photos.
+    """
+    file_tuple = ready_files.get(original_name)
+    file_name = file_tuple[0]
+    directory_path = file_tuple[1]
+    is_video = file_tuple[2]
+    file_date = file_tuple[3]
+    if not directory_exists(directory_path):
+        os.mkdir(fr"{directory_path}")
+    file_name = check_file_name(file_name, directory_path, is_video)
+    old_name_path = downloads_directory + "\\" + original_name
+    if is_video:
+        suffix = ".mp4"
+    else:
+        suffix = ".jpg"
+    new_name_path = directory_path + "\\" + file_name + suffix
+    shutil.move(old_name_path, new_name_path)
+    # shutil.move(fr'{downloads_directory + file_name}', directory_path)
+    set_metadata(new_name_path, file_date)
+
+
+# setting the date of the picture to be the actual time the photo was taken
+def set_metadata(file_path, date_str):
+    """
+    setting the metadata of the file to the original date the photo were taken
+    :param file_path: the path of the photo/video
+    :param date_str: the original date as a string
+    """
+    exif_dict = piexif.load(file_path)
+    exif_dict["Exif"][piexif.ExifIFD.DateTimeOriginal] = date_str.encode("utf-8")
+    exif_dict["Exif"][piexif.ExifIFD.DateTimeDigitized] = date_str.encode("utf-8")
+    exif_bytes = piexif.dump(exif_dict)
+    piexif.insert(exif_bytes, file_path)
+
+
 
 
 if __name__ == '__main__':
