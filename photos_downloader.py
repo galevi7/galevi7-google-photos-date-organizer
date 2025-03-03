@@ -578,4 +578,4 @@ if __name__ == '__main__':
     make_directory("C:\\Users\\galev\\OneDrive\\Desktop")
     path_str = "C:\\Users\\galev\\OneDrive\\Desktop\\Google Photos"
     crawler("https://photos.google.com/photo/AF1QipPAANMypHAamS9LdlpcjHFHUM0vdZMirWfYyTLs", path_str,
-            True, False, 10, True, 'galevi403', 'Gal140921Tehila')
+            True, False, 10, True, '******', '********')
