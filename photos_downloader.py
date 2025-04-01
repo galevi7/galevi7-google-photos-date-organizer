@@ -5,8 +5,9 @@ from selenium import webdriver
 from selenium.webdriver import ActionChains
 from selenium.webdriver.common.by import By
 from selenium.webdriver.common.keys import Keys
-import piexif
 import multiprocessing
+from dotenv import load_dotenv
+
 
 
 
@@ -182,53 +183,7 @@ class PhotosDownloader:
         # Check if the last 3 characters of the name are ".mp" (which could be for mp4, mp3, etc.)
         # is_video = ".mp4" in parent_content
         parent_text = parent_content.split("\n")
-        #
-        # for line in parent_text:
-        #     if line[-3:] in ["jpg", "JPG", "jpeg", "JPEG"]:  # Common photo formats
-        #         original_name = line
-        #         break
-        #     elif line[-3:] in ["png", "PNG"]:  # Common lossless photo format
-        #         original_name = line
-        #         break
-        #     elif line[-3:] in ["gif", "GIF"]:  # Animated/static image
-        #         original_name = line
-        #         break
-        #     elif line[-4:] in ["heic", "HEIC", "heif", "HEIF"]:  # Modern photo formats
-        #         original_name = line
-        #         break
-        #     elif line[-3:] in ["webp", "WEBP"]:  # Web-friendly photo format
-        #         original_name = line
-        #         break
-        #     elif line[-3:] in ["bmp", "BMP"]:  # Older bitmap format
-        #         original_name = line
-        #         break
-        #     elif line[-3:] in ["tif", "TIF", "tiff", "TIFF"]:  # High-quality images
-        #         original_name = line
-        #         break
-        #     elif line[-3:] in ["mp4", "MP4"]:  # Most common video format
-        #         original_name = line
-        #         break
-        #     elif line[-3:] in ["mov", "MOV"]:  # Apple video format
-        #         original_name = line
-        #         break
-        #     elif line[-3:] in ["avi", "AVI"]:  # Video format
-        #         original_name = line
-        #         break
-        #     elif line[-3:] in ["mkv", "MKV"]:  # Versatile video format
-        #         original_name = line
-        #         break
-        #     elif line[-4:] in ["flv", "FLV"]:  # Flash video
-        #         original_name = line
-        #         break
-        #     elif line[-3:] in ["3gp", "3GP"]:  # Mobile-friendly format
-        #         original_name = line
-        #         break
-        #     elif line[-4:] in ["webm", "WEBM"]:  # Open-source web format
-        #         original_name = line
-        #         break
-        #     elif line[-4:] in ["mts", "MTS", "m2ts", "M2TS"]:  # AVCHD formats
-        #         original_name = line
-        #         break
+
 
         valid_extensions = {
             "jpg", "jpeg", "png", "gif", "heic", "heif", "webp", "bmp",
@@ -244,7 +199,7 @@ class PhotosDownloader:
                 suffix = ext  # Use the actual file extension as the suffix
                 break
 
-        original_name = self.check_file_name(original_name, self.download_dir_path, suffix)
+        # original_name = self.check_file_name(original_name, self.download_dir_path, suffix)
 
         return [original_name, file_name, file_date, designated_directory_path, suffix]
 
@@ -300,6 +255,7 @@ class PhotosDownloader:
         options.add_argument("--lang=he")
         options.add_experimental_option("useAutomationExtension", False)
         options.add_experimental_option("excludeSwitches", ["enable-automation"])
+        options.add_argument("--mute-audio")
         self.driver = webdriver.Chrome(options=options)
         self.driver.execute_script("Object.defineProperty(navigator, 'webdriver', {get: () => undefined})")
 
@@ -318,16 +274,18 @@ class PhotosDownloader:
         self.download_dir_path = self.get_download_directory()
         return self.download_dir_path
 
-    def safe_crawler(self, file_list, username, password, finished_iterate_photos, error_queue, shared_download_path):
+    def safe_crawler(self, file_list, finished_iterate_photos, error_queue, shared_download_path,
+                     finished_download):
         """Wrapper for crawler to catch exceptions and send them to the queue."""
         try:
-            self.crawler(file_list, shared_download_path, username, password, finished_iterate_photos)
-        except Exception as e:
-            self.driver.quit()
-            error_queue.put(str(e))
+            self.crawler(file_list, shared_download_path, finished_iterate_photos, finished_download)
+        except Exception as ex:
+            if self.driver:
+                self.driver.quit()
+            error_queue.put(str(ex))
 
     ##### the main function for the 1st process ####
-    def crawler(self, file_list, shared_download_path, username="", password="", finished_iterate_photos=None):
+    def crawler(self, file_list, shared_download_path, finished_iterate_photos, finished_download):
         # initializing parameters and the webdriver and unable google restriction to log in
         # (restriction due to identification of webdriver that runs through selenium)
         self.init_crawler_and_download_dir()
@@ -349,6 +307,13 @@ class PhotosDownloader:
         if "Error 404" in self.driver.title:
             raise Exception("The photo you entered is not available or does not exist. Please try again.")
 
+        try:
+            self.driver.minimize_window()  # Minimize browser
+            self.driver.set_window_position(-10000, 0)  # Move it off-screen
+            print("Browser is now minimized and input is disabled.")
+        except Exception as e:
+            raise Exception(f"Failed to make browser uninterrupted: {str(e)}")
+
         # moving back and forth to reveal data
         Direction, opposite_direction = self.set_direction(self.get_language())
         self.move_to_next_photo(Direction)
@@ -365,8 +330,10 @@ class PhotosDownloader:
                 file_list.append(file_data_tuple)
                 time.sleep(1)
                 if self.delete:
+                    if file_data_tuple[-1] == "mp4":
+                        time.sleep(3)
                     self.delete_photo()
-                    time.sleep(2)
+                    time.sleep(1)
                     if not self.older_photos:
                         previous_url = self.driver.current_url
                         time.sleep(0.5)
@@ -391,7 +358,10 @@ class PhotosDownloader:
                 file_data_tuple = self.download_and_collect_data()
                 file_list.append(file_data_tuple)
                 if self.delete:
+                    if file_data_tuple[-1] == "mp4":
+                        time.sleep(3)
                     self.delete_photo()
+                    time.sleep(1)
                     if not self.older_photos:
                         previous_url = self.driver.current_url
                         self.move_to_next_photo(Direction)
@@ -401,8 +371,11 @@ class PhotosDownloader:
                     time.sleep(1)
                 current_url = self.driver.current_url
         finished_iterate_photos.value = True
+        time.sleep(5)
         print("finished_iterate_photos.value: ", finished_iterate_photos.value)
         print("finished 1st process")
+        while not finished_download.value:
+            time.sleep(1)
         self.driver.quit()
 
     ### those functions are for single process (not in use) ###
@@ -412,11 +385,14 @@ class PhotosDownloader:
     def check_download(self, ready_files_queue, file_list,
                        finished_iterate_photos, finished_download, shared_download_path):
 
+        last_activity_time = time.time()  # Start timer
+
         while (not finished_iterate_photos.value) or (len(file_list) > 0):
 
             if len(file_list) > 0 and shared_download_path.value:
+                last_activity_time = time.time()  # Reset timer
 
-                # file_data_tuple = (original_name, file_name, file_date, designated_directory_path)
+                # Process file
                 file_data_tuple = file_list.pop(0)
                 original_name = file_data_tuple[0]
                 file_name = file_data_tuple[1]
@@ -424,39 +400,59 @@ class PhotosDownloader:
                 designated_directory_path = file_data_tuple[3]
                 suffix = file_data_tuple[4]
                 file_full_path = shared_download_path.value + "\\" + original_name
+
                 if os.path.isfile(file_full_path):
                     print(f"{file_name} were added to the queue!!!")
                     print(len(file_list))
                     ready_files_queue.put((file_full_path, file_name, file_date, designated_directory_path, suffix))
                 else:
                     file_list.append(file_data_tuple)
-        print("finished 2nd process")
+
+            # Stop if nothing happens for 150 seconds
+            if time.time() - last_activity_time > 150:
+                print("Timeout reached: No activity in check_download for 150 seconds. Stopping.")
+                break
+
+        print("Finished 2nd process")
         finished_download.value = True
+        print("finished_download.value: ", finished_download.value)
+        time.sleep(3)
 
     ################ functions for the 3rd process ####################
     def rename_and_move(self, ready_files_queue, finished_download):
-        """
-        the function rename the original name of the file to the date the photo were taken.
-        """
+        last_activity_time = time.time()  # Start timer
+
         while (not finished_download.value) or (not ready_files_queue.empty()):
-            # file_data_tuple = (file_full_path, file_name, file_date, designated_directory_path, suffix)
+
             if not ready_files_queue.empty():
+                last_activity_time = time.time()  # Reset timer
+
+                # Process file
                 file_data_tuple = ready_files_queue.get()
                 file_full_path = file_data_tuple[0]
                 file_date = file_data_tuple[2]
                 designated_directory_path = file_data_tuple[3]
                 suffix = file_data_tuple[4]
                 file_name = file_data_tuple[1] + "." + suffix
+
                 if not self.directory_exists(designated_directory_path):
                     os.mkdir(fr"{designated_directory_path}")
+
                 file_name = self.check_file_name(file_name, designated_directory_path, suffix)
                 new_name_path = designated_directory_path + "\\" + file_name
-                # need to do logs here!!!
+
                 print("before move")
                 shutil.move(file_full_path, new_name_path)
                 print(f"is the file still exist in the original path: {os.path.isfile(file_full_path)}")
-                # shutil.move(fr'{downloads_directory + file_name}', directory_path)
+
                 self.set_metadata(new_name_path, file_date)
+
+            # Stop if nothing happens for 300 seconds
+            if time.time() - last_activity_time > 250:
+                print("Timeout reached: No activity in rename_and_move for 150 seconds. Stopping.")
+                break
+
+        print("Finished renaming and moving files")
 
     # setting the date of the picture to be the actual time the photo was taken
 
@@ -488,13 +484,16 @@ class PhotosDownloader:
             file_list = manager.list()
             shared_download_path = manager.Value('download', '')
             error_queue = manager.Queue()
-            username = os.getenv("username")
-            password = os.getenv("password")
+
+            load_dotenv()
+            username = os.getenv("g_u")
+            password = os.getenv("g_p")
             # Create and start the processes
 
             crawler_process = multiprocessing.Process(target=self.safe_crawler,
-                                                      args=(file_list, username, password,
-                                                            finished_iterate_photos, error_queue, shared_download_path))
+                                                      args=(file_list,
+                                                            finished_iterate_photos, error_queue,
+                                                            shared_download_path, finished_download))
 
             download_check_process = multiprocessing.Process(target=self.check_download,
                                                              args=(
@@ -534,9 +533,11 @@ if __name__ == '__main__':
     # download_all_photos = False
     # number_of_photos = 5
     # delete = False
-    pd = PhotosDownloader(r"https://photos.google.com/photo/AF1QipOkA1Niii07AofTpe-OuPWA3Cd9q6FfN8p16pDC",
-                          r"C:\Users\galev\OneDrive\Desktop\Google Photos", True, False, 5, False)
+    pd = PhotosDownloader(r"https://photos.google.com/photo/AF1QipPXcTVmtePRmIl-qlND6437AGkDnOo_LNhFzZJl",
+                          r"C:\Users\galev\OneDrive\Desktop\Google Photos", True, False, 7, True)
     try:
         pd.start()
     except Exception as e:
         print(str(e))
+    finally:
+        print("finished")
