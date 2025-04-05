@@ -38,7 +38,7 @@ An easy-to-use tool to download and optionally delete photos from your Google Ph
 
 ## 📦 Step 2: Download this app
 
-1. Click the green **"Code"** button on the GitHub page  
+1. Click the green **"Code"** button on the **Top** of the GitHub page  
 2. Choose **"Download ZIP"**  
 3. Right-click the ZIP → **Extract All**
 

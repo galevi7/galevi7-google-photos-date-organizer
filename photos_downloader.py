@@ -106,10 +106,6 @@ class PhotosDownloader:
         element.send_keys(Keys.SHIFT + '#')
         time.sleep(2)
         self.driver.switch_to.active_element.send_keys(Keys.ENTER)
-        time.sleep(0.1)
-        self.driver.switch_to.active_element.send_keys(Keys.ENTER)
-        time.sleep(0.1)
-        self.driver.switch_to.active_element.send_keys(Keys.ENTER)
         time.sleep(2)
 
 
@@ -310,11 +306,11 @@ class PhotosDownloader:
         if "Error 404" in self.driver.title:
             raise Exception("The photo you entered is not available or does not exist. Please try again.")
 
-        # try:
-        #     self.driver.minimize_window()  # Minimize browser
-        #     self.driver.set_window_position(-10000, 0)  # Move it off-screen
-        # except Exception as e:
-        #     raise Exception(f"Failed to make browser uninterrupted: {str(e)}")
+        try:
+            self.driver.minimize_window()  # Minimize browser
+            self.driver.set_window_position(-10000, 0)  # Move it off-screen
+        except Exception as e:
+            raise Exception(f"Failed to make browser uninterrupted: {str(e)}")
 
         # moving back and forth to reveal data
         Direction, opposite_direction = self.set_direction(self.get_language())
