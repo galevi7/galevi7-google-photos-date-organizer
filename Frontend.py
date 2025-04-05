@@ -17,54 +17,64 @@ def welcome_screen():
     welcome.state('zoomed')
     welcome.title("Welcome")
 
-    # Set the background color to green for the entire window
-    welcome.config(bg="green")
+    # Updated palette (harmonized)
+    bg_color = "#C4DFDF"       # Now used as the main background
+    text_color = "#65647C"     # Clean, dark-blue for all text
+    button_bg = "#20948B"      # Subtle, elegant highlight
 
-    images = [PhotoImage(file=f"photos/{img}.png") for img in ["url", "older", "delete", "download_all",
-                                                               "number_of_photos"]]
-    texts = ["Here you insert the url of the photo/video that the download will start from.",
-             "Here you'll need to choose if you want to download older files from the url you chose, or earlier",
-             "Here you need to decide if all the files that downloaded will be deletes from google photos or not.",
-             "Here you can choose if you want to download all the files from the url you chose, or a specific number of files.",
-             "Here you can choose how many files you want to download starting from the url you chose."]
+    welcome.config(bg=bg_color)
 
-    Label(welcome, text="Welcome to Google Photos Downloader", font=("Arial", 18, "bold"), bg="green").pack(pady=10)
+    images = [PhotoImage(file=f"photos/{img}.png") for img in ["url", "older", "delete", "download_all", "number_of_photos"]]
+    texts = [
+        "🢃 Here you insert the URL of the photo/video that the download will start from. 🢃",
+        "🢃 Here you'll need to choose if you want to download older files from the URL you chose, or earlier. 🢃",
+        "🢃 Here you need to decide if all the files that downloaded will be deleted from Google Photos or not. 🢃",
+        "🢃 Here you can choose if you want to download all the files from the URL you chose, or a specific number of files. 🢃",
+        "🢃 If you didn't choose to download all photos, you need to specify how many files you want to"
+        " download starting from 🢃  \t\t\t\t the URL you chose."
+    ]
 
-    frame = Frame(welcome, bg="green")  # Set the background color for the frame
-    frame.pack(pady=20)
+    Label(welcome, text="Welcome to Google Photos Downloader",
+          font=("Arial", 20, "bold"), bg=bg_color, fg="black").pack(pady=20)
+
+    frame = Frame(welcome, bg=bg_color)
+    frame.pack(pady=10)
 
     for i, (img, text) in enumerate(zip(images, texts)):
-        Label(frame, image=img, bg="green").grid(row=i * 2, column=0, padx=10)
-        Label(frame, text=text, font=("Arial", 16, "bold"), bg="green").grid(row=i * 2 + 1, column=0)
+        Label(frame, text=text, font=("Arial", 14), bg=bg_color, fg=text_color,
+              wraplength=1000, justify="left", padx=10, pady=5).grid(row=i * 2, column=0, pady=5)
+        Label(frame, image=img, bg=bg_color).grid(row=i * 2 + 1, column=0, padx=10)
 
-    Button(welcome, text="Next", command=lambda: switch_screen(welcome, info_screen), bg="green").pack(pady=10)
+
+    Button(welcome, text="Next", command=lambda: switch_screen(welcome, run_ui),
+           font=("Arial", 16, "bold"), bg=button_bg, fg="black", activebackground="#98D2C0").pack(pady=20)
 
     welcome.images = images  # Prevent garbage collection
     welcome.mainloop()
 
 
-def info_screen():
-    """Information screen explaining the tool."""
-    info = Tk()
-    info.state('zoomed')
-    info.title("Information")
-
-    Label(info, text="This tool downloads photos from Google Photos.", font=("Arial", 14)).pack(pady=10)
-
-    Button(info, text="Back", command=lambda: switch_screen(info, welcome_screen)).pack(side="left", padx=20, pady=20)
-    Button(info, text="Continue", command=lambda: switch_screen(info, run_ui)).pack(side="right", padx=20, pady=20)
-
-    info.mainloop()
-
-
 def run_ui():
     """Main UI for user inputs and validation."""
     window = Tk()
-    window.state('zoomed')
+    window.update_idletasks()
+    width, height = 700, 300
+    x = (window.winfo_screenwidth() // 2) - (width // 2)
+    y = (window.winfo_screenheight() // 2) - (height // 2)
+    window.geometry(f"{width}x{height}+{x}+{y}")
+    window.resizable(False, False)
     window.title("Google Photos Downloader")
 
-    url_var, older_newer_var = StringVar(), StringVar(value="Newer photos")
-    all_photos_var, delete_photos_var = StringVar(value="Yes"), StringVar(value="No")
+    # Color scheme
+    bg_color = "#C4DFDF"
+    text_color = "black"
+    button_bg = "#68A7AD"
+
+    window.configure(bg=bg_color)
+
+    url_var = StringVar()
+    older_newer_var = StringVar(value="Newer photos")
+    all_photos_var = StringVar(value="Yes")
+    delete_photos_var = StringVar(value="No")
     number_of_photos_var = StringVar(value="0")
 
     def validate_and_submit():
@@ -100,34 +110,56 @@ def run_ui():
 
     def toggle_number_of_photos_entry(*args):
         if all_photos_var.get() == "No":
-            number_of_photos_label.grid(row=5, column=0, sticky='e', padx=10, pady=5)
-            number_of_photos_entry.grid(row=5, column=1, columnspan=2, sticky='w', padx=10, pady=5)
+            number_of_photos_label.grid(row=4, column=1, sticky='w', padx=10, pady=5)
+            number_of_photos_entry.grid(row=4, column=2, sticky='w', padx=10, pady=5)
         else:
             number_of_photos_label.grid_remove()
             number_of_photos_entry.grid_remove()
 
-    Label(window, text="Insert the starting photo/video URL:").grid(row=0, column=0, sticky='e', padx=10, pady=5)
-    Entry(window, width=85, textvariable=url_var).grid(row=0, column=1, columnspan=2, sticky='w', padx=10, pady=5)
+    # Frame setup
+    frame = Frame(window, bg=bg_color)
+    frame.place(relx=0.5, rely=0.5, anchor="center")
 
-    Label(window, text="Choose download option:").grid(row=1, column=0, sticky='e', padx=10, pady=5)
-    Combobox(window, width=17, textvariable=older_newer_var, values=('Older photos', 'Newer photos')).grid(
-        row=1, column=1, columnspan=2, sticky='w', padx=10, pady=5)
+    label_font = ("Arial", 13, "bold")
 
-    Label(window, text="Delete downloaded photos from Google Photos:").grid(row=2, column=0, sticky='e', padx=10,
-                                                                            pady=5)
-    Combobox(window, width=17, textvariable=delete_photos_var, values=('Yes', 'No')).grid(
-        row=2, column=1, columnspan=2, sticky='w', padx=10, pady=5)
+    # Form layout
+    Label(frame, text="Insert the starting photo/video URL:", bg=bg_color, fg=text_color,
+          font=label_font).grid(row=0, column=1, sticky='w', padx=10, pady=5)
+    Entry(frame, textvariable=url_var, width=40).grid(row=0, column=2, sticky='w', padx=10, pady=5)
 
-    Label(window, text="Download all photos from starting URL:").grid(row=3, column=0, sticky='e', padx=10, pady=5)
-    download_all = Combobox(window, width=17, textvariable=all_photos_var, values=('Yes', 'No'))
-    download_all.grid(row=3, column=1, columnspan=2, sticky='w', padx=10, pady=5)
+    Label(frame, text="Choose download option:", bg=bg_color, fg=text_color,
+          font=label_font).grid(row=1, column=1, sticky='w', padx=10, pady=5)
+    Combobox(frame, textvariable=older_newer_var, values=('Older photos', 'Newer photos'), width=15).grid(
+        row=1, column=2, sticky='w', padx=10, pady=5)
+
+    Label(frame, text="Delete downloaded photos from Google Photos:", bg=bg_color, fg=text_color,
+          font=label_font).grid(row=2, column=1, sticky='w', padx=10, pady=5)
+    Combobox(frame, textvariable=delete_photos_var, values=('Yes', 'No'), width=15).grid(
+        row=2, column=2, sticky='w', padx=10, pady=5)
+
+    Label(frame, text="Download all photos from starting URL:", bg=bg_color, fg=text_color,
+          font=label_font).grid(row=3, column=1, sticky='w', padx=10, pady=5)
+    download_all = Combobox(frame, textvariable=all_photos_var, values=('Yes', 'No'), width=15)
+    download_all.grid(row=3, column=2, sticky='w', padx=10, pady=5)
     download_all.bind("<<ComboboxSelected>>", toggle_number_of_photos_entry)
 
-    number_of_photos_label = Label(window, text="Number of photos to download:")
-    number_of_photos_entry = Entry(window, width=50, textvariable=number_of_photos_var)
+    number_of_photos_label = Label(frame, text="Number of photos to download:",
+                                   bg=bg_color, fg=text_color, font=label_font)
+    number_of_photos_entry = Entry(frame, textvariable=number_of_photos_var, width=20)
     toggle_number_of_photos_entry()
 
-    Button(window, text="Submit", command=validate_and_submit).grid(row=6, column=1, columnspan=2, pady=20)
+    # Buttons Frame (centered container for both buttons)
+    button_frame = Frame(frame, bg=bg_color)
+    button_frame.grid(row=5, column=1, columnspan=2, pady=20)
+
+    Button(button_frame, text="Back", width=12, bg=button_bg, fg="black",
+           font=("Arial", 12, "bold"), command=lambda: switch_screen(window, welcome_screen)).pack(
+        side=LEFT, padx=10)
+
+    Button(button_frame, text="Submit", width=12, bg=button_bg, fg="black",
+           font=("Arial", 12, "bold"), command=validate_and_submit).pack(
+        side=LEFT, padx=10)
+
     window.mainloop()
 
 
