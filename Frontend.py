@@ -2,7 +2,7 @@ from tkinter import *
 from tkinter import messagebox, filedialog
 from tkinter.ttk import Combobox
 import multiprocessing
-import photos_downloader  # Ensure this module exists
+import photos_downloader
 
 
 def switch_screen(current, next_screen):
@@ -17,21 +17,21 @@ def welcome_screen():
     welcome.state('zoomed')
     welcome.title("Welcome")
 
-    # Updated palette (harmonized)
-    bg_color = "#C4DFDF"       # Now used as the main background
-    text_color = "#65647C"     # Clean, dark-blue for all text
-    button_bg = "#20948B"      # Subtle, elegant highlight
+    bg_color = "#C4DFDF"
+    text_color = "#65647C"
+    button_bg = "#20948B"
 
     welcome.config(bg=bg_color)
 
     images = [PhotoImage(file=f"photos/{img}.png") for img in ["url", "older", "delete", "download_all", "number_of_photos"]]
     texts = [
-        "🢃 Here you insert the URL of the photo/video that the download will start from. 🢃",
-        "🢃 Here you'll need to choose if you want to download older files from the URL you chose, or earlier. 🢃",
-        "🢃 Here you need to decide if all the files that downloaded will be deleted from Google Photos or not. 🢃",
-        "🢃 Here you can choose if you want to download all the files from the URL you chose, or a specific number of files. 🢃",
+        "🢃 Here you insert the URL of the photo/video that the download will start from 🢃",
+        "🢃 Here you'll need to choose if you want to download older/newer files from the chosen file 🢃",
+        "🢃 Here you need to decide if all the files that downloaded will be deleted from Google Photos or not 🢃",
+        "🢃 Here you can choose if you want to download all the files from the chosen file,"
+        " or a specific number of files 🢃",
         "🢃 If you didn't choose to download all photos, you need to specify how many files you want to"
-        " download starting from 🢃  \t\t\t\t the URL you chose."
+        " download starting from 🢃  \t\t\t\t\t the file you chose"
     ]
 
     Label(welcome, text="Welcome to Google Photos Downloader",
@@ -184,3 +184,8 @@ if __name__ == "__main__":
             print(f"An error occurred: {str(e)}")
         finally:
             print("Ended session")
+            # Show final message box
+            root = Tk()
+            root.withdraw()  # Hide the main window
+            messagebox.showinfo("Done", "Google Photos Downloader has completed successfully.")
+            root.destroy()
