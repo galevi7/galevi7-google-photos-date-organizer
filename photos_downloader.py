@@ -306,11 +306,11 @@ class PhotosDownloader:
         if "Error 404" in self.driver.title:
             raise Exception("The photo you entered is not available or does not exist. Please try again.")
 
-        try:
-            self.driver.minimize_window()  # Minimize browser
-            self.driver.set_window_position(-10000, 0)  # Move it off-screen
-        except Exception as e:
-            raise Exception(f"Failed to make browser uninterrupted: {str(e)}")
+        # try:
+        #     self.driver.minimize_window()  # Minimize browser
+        #     self.driver.set_window_position(-10000, 0)  # Move it off-screen
+        # except Exception as e:
+        #     raise Exception(f"Failed to make browser uninterrupted: {str(e)}")
 
         # moving back and forth to reveal data
         Direction, opposite_direction = self.set_direction(self.get_language())
@@ -339,10 +339,10 @@ class PhotosDownloader:
                         previous_url = self.driver.current_url
                         time.sleep(0.5)
                         self.move_to_next_photo(Direction)
-                        time.sleep(2)
+                        time.sleep(3)
                 else:
                     self.move_to_next_photo(Direction)
-                    time.sleep(1)
+                    time.sleep(2)
                 current_url = self.driver.current_url
 
         # in case that the user chose to download a certain number of photos.
@@ -366,10 +366,10 @@ class PhotosDownloader:
                     if not self.older_photos:
                         previous_url = self.driver.current_url
                         self.move_to_next_photo(Direction)
-                        time.sleep(0.5)
+                        time.sleep(3)
                 else:
                     self.move_to_next_photo(Direction)
-                    time.sleep(1)
+                    time.sleep(2)
                 current_url = self.driver.current_url
         finished_iterate_photos.value = True
         time.sleep(5)
