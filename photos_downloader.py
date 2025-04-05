@@ -319,6 +319,9 @@ class PhotosDownloader:
         Direction, opposite_direction = self.set_direction(self.get_language())
         self.move_to_next_photo(Direction)
         self.move_to_next_photo(opposite_direction)
+        if self.driver.current_url != self.url:
+            self.move_to_next_photo(Direction)
+            time.sleep(1)
 
         # in case the user chooses to download all the photos from the photo he chose.
         if self.download_all_photos:
