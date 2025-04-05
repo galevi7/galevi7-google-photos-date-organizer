@@ -104,7 +104,7 @@ def run_ui():
             "delete": delete_photos_var.get() == "Yes"
         })
 
-        messagebox.showinfo("Success", "Inputs validated successfully!")
+        messagebox.showinfo("Success", "Please login to your Google account in the browser window that opens.")
         window.quit()
         window.destroy()
 
@@ -148,9 +148,13 @@ def run_ui():
     number_of_photos_entry = Entry(frame, textvariable=number_of_photos_var, width=20)
     toggle_number_of_photos_entry()
 
-    # Buttons Frame (centered container for both buttons)
+    Label(frame, text="⚠️ Notice: After you press Submit, you'll need to choose a designated download directory.",
+          bg=bg_color, fg="red", font=("Arial", 11, "italic"), wraplength=500, justify="center").grid(
+        row=5, column=1, columnspan=2, pady=(15, 5))
+
+    # Buttons Frame (now at row 6)
     button_frame = Frame(frame, bg=bg_color)
-    button_frame.grid(row=5, column=1, columnspan=2, pady=20)
+    button_frame.grid(row=6, column=1, columnspan=2, pady=20)
 
     Button(button_frame, text="Back", width=12, bg=button_bg, fg="black",
            font=("Arial", 12, "bold"), command=lambda: switch_screen(window, welcome_screen)).pack(

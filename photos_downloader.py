@@ -106,10 +106,6 @@ class PhotosDownloader:
         element.send_keys(Keys.SHIFT + '#')
         time.sleep(2)
         self.driver.switch_to.active_element.send_keys(Keys.ENTER)
-        time.sleep(0.1)
-        self.driver.switch_to.active_element.send_keys(Keys.ENTER)
-        time.sleep(0.1)
-        self.driver.switch_to.active_element.send_keys(Keys.ENTER)
         time.sleep(2)
 
 
