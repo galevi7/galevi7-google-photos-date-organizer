@@ -328,7 +328,7 @@ class PhotosDownloader:
                 previous_url = current_url
 
                 file_data_tuple = self.download_and_collect_data()
-                time.sleep(5)
+                time.sleep(2)
                 file_list.append(file_data_tuple)
                 time.sleep(1)
                 if self.delete:
@@ -338,9 +338,9 @@ class PhotosDownloader:
                     time.sleep(1)
                     if not self.older_photos:
                         previous_url = self.driver.current_url
-                        time.sleep(2)
+                        time.sleep(1)
                         self.move_to_next_photo(Direction)
-                        time.sleep(3)
+                        time.sleep(2)
                 else:
                     self.move_to_next_photo(Direction)
                     time.sleep(2)
@@ -358,7 +358,7 @@ class PhotosDownloader:
                 previous_url = current_url
 
                 file_data_tuple = self.download_and_collect_data()
-                time.sleep(5)
+                time.sleep(2)
                 file_list.append(file_data_tuple)
                 if self.delete:
                     if file_data_tuple[-1] == "mp4":
@@ -367,9 +367,9 @@ class PhotosDownloader:
                     time.sleep(2)
                     if not self.older_photos:
                         previous_url = self.driver.current_url
-                        time.sleep(2)
+                        time.sleep(1)
                         self.move_to_next_photo(Direction)
-                        time.sleep(3)
+                        time.sleep(2)
                 else:
                     self.move_to_next_photo(Direction)
                     time.sleep(2)

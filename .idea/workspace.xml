@@ -5,7 +5,6 @@
   </component>
   <component name="ChangeListManager">
     <list default="true" id="aeb31955-dc47-404d-8a48-607f9342079d" name="Changes" comment="added more sleep">
-      <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/photos_downloader.py" beforeDir="false" afterPath="$PROJECT_DIR$/photos_downloader.py" afterDir="false" />
     </list>
     <option name="SHOW_DIALOG" value="false" />
@@ -456,7 +455,14 @@
       <option name="project" value="LOCAL" />
       <updated>1743874597713</updated>
     </task>
-    <option name="localTasksCounter" value="24" />
+    <task id="LOCAL-00024" summary="added more sleep">
+      <created>1743875094165</created>
+      <option name="number" value="00024" />
+      <option name="presentableId" value="LOCAL-00024" />
+      <option name="project" value="LOCAL" />
+      <updated>1743875094165</updated>
+    </task>
+    <option name="localTasksCounter" value="25" />
     <servers />
   </component>
   <component name="TypeScriptGeneratedFilesManager">
