@@ -27,8 +27,9 @@ An easy-to-use tool to download and optionally delete photos from your Google Ph
 
 ➡️ Download and install Python:
 
-1. Go to: https://www.python.org/downloads/windows/  
-2. Download the latest version for **Windows**  
+1. Go to: https://www.python.org/ftp/python/3.13.2/python-3.13.2-amd64.exe - it should start downloading automatically  
+   (or search for "Python download" in your browser)  
+2. install the latest version for **Windows**  
 3. IMPORTANT: During installation, check the box that says:  
    ✅ **"Add Python to PATH"**  
 4. Click **Install Now**
@@ -37,7 +38,7 @@ An easy-to-use tool to download and optionally delete photos from your Google Ph
 
 ## 📦 Step 2: Download this app
 
-1. Click the green **"Code"** button on the GitHub page  
+1. Click the green **"Code"** button on the **Top** of the GitHub page  
 2. Choose **"Download ZIP"**  
 3. Right-click the ZIP → **Extract All**
 
