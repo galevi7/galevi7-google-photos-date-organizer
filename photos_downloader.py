@@ -294,7 +294,7 @@ class PhotosDownloader:
         self.driver.get(self.url)
 
         # Waiting until the user correctly logged-in and letting the driver sleep and not overload the cpu.
-        timeout = 120  # 2 minutes
+        timeout = 180  # 2 minutes
         start_time = time.time()
 
         while self.driver.current_url != self.url:
@@ -328,6 +328,7 @@ class PhotosDownloader:
                 previous_url = current_url
 
                 file_data_tuple = self.download_and_collect_data()
+                time.sleep(5)
                 file_list.append(file_data_tuple)
                 time.sleep(1)
                 if self.delete:
@@ -337,7 +338,7 @@ class PhotosDownloader:
                     time.sleep(1)
                     if not self.older_photos:
                         previous_url = self.driver.current_url
-                        time.sleep(0.5)
+                        time.sleep(2)
                         self.move_to_next_photo(Direction)
                         time.sleep(3)
                 else:
@@ -357,14 +358,16 @@ class PhotosDownloader:
                 previous_url = current_url
 
                 file_data_tuple = self.download_and_collect_data()
+                time.sleep(5)
                 file_list.append(file_data_tuple)
                 if self.delete:
                     if file_data_tuple[-1] == "mp4":
                         time.sleep(3)
                     self.delete_photo()
-                    time.sleep(1)
+                    time.sleep(2)
                     if not self.older_photos:
                         previous_url = self.driver.current_url
+                        time.sleep(2)
                         self.move_to_next_photo(Direction)
                         time.sleep(3)
                 else:
