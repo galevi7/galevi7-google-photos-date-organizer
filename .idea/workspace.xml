@@ -4,7 +4,9 @@
     <option name="autoReloadType" value="SELECTIVE" />
   </component>
   <component name="ChangeListManager">
-    <list default="true" id="aeb31955-dc47-404d-8a48-607f9342079d" name="Changes" comment="added more sleep">
+    <list default="true" id="aeb31955-dc47-404d-8a48-607f9342079d" name="Changes" comment="changed sleep time">
+      <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/google_photos_downloader.py" beforeDir="false" afterPath="$PROJECT_DIR$/google_photos_downloader.py" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/photos_downloader.py" beforeDir="false" afterPath="$PROJECT_DIR$/photos_downloader.py" afterDir="false" />
     </list>
     <option name="SHOW_DIALOG" value="false" />
@@ -462,7 +464,14 @@
       <option name="project" value="LOCAL" />
       <updated>1743875094165</updated>
     </task>
-    <option name="localTasksCounter" value="25" />
+    <task id="LOCAL-00025" summary="changed sleep time">
+      <created>1743875377084</created>
+      <option name="number" value="00025" />
+      <option name="presentableId" value="LOCAL-00025" />
+      <option name="project" value="LOCAL" />
+      <updated>1743875377084</updated>
+    </task>
+    <option name="localTasksCounter" value="26" />
     <servers />
   </component>
   <component name="TypeScriptGeneratedFilesManager">
@@ -501,7 +510,8 @@
     <MESSAGE value="added a proper Readme" />
     <MESSAGE value="added a link to Readme" />
     <MESSAGE value="added more sleep" />
-    <option name="LAST_COMMIT_MESSAGE" value="added more sleep" />
+    <MESSAGE value="changed sleep time" />
+    <option name="LAST_COMMIT_MESSAGE" value="changed sleep time" />
   </component>
   <component name="com.intellij.coverage.CoverageDataManagerImpl">
     <SUITE FILE_PATH="coverage/galevi7_google_photos_date_organizer$.coverage" NAME=" Coverage Results" MODIFIED="1735318912837" SOURCE_PROVIDER="com.intellij.coverage.DefaultCoverageFileProvider" RUNNER="coverage.py" COVERAGE_BY_TEST_ENABLED="true" COVERAGE_TRACING_ENABLED="false" WORKING_DIRECTORY="$PROJECT_DIR$/tests" />

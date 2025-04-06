@@ -108,7 +108,6 @@ class PhotosDownloader:
         self.driver.switch_to.active_element.send_keys(Keys.ENTER)
         time.sleep(2)
 
-
     def get_file_date_and_name(self):
 
         """
@@ -306,11 +305,11 @@ class PhotosDownloader:
         if "Error 404" in self.driver.title:
             raise Exception("The photo you entered is not available or does not exist. Please try again.")
 
-        # try:
-        #     self.driver.minimize_window()  # Minimize browser
-        #     self.driver.set_window_position(-10000, 0)  # Move it off-screen
-        # except Exception as e:
-        #     raise Exception(f"Failed to make browser uninterrupted: {str(e)}")
+        try:
+            self.driver.minimize_window()  # Minimize browser
+            self.driver.set_window_position(-10000, 0)  # Move it off-screen
+        except Exception as e:
+            raise Exception(f"Failed to make browser uninterrupted: {str(e)}")
 
         # moving back and forth to reveal data
         Direction, opposite_direction = self.set_direction(self.get_language())
@@ -335,15 +334,15 @@ class PhotosDownloader:
                     if file_data_tuple[-1] == "mp4":
                         time.sleep(3)
                     self.delete_photo()
-                    time.sleep(1)
+                    time.sleep(1.5)
                     if not self.older_photos:
                         previous_url = self.driver.current_url
                         time.sleep(1)
                         self.move_to_next_photo(Direction)
-                        time.sleep(2)
+                        time.sleep(1.5)
                 else:
                     self.move_to_next_photo(Direction)
-                    time.sleep(2)
+                    time.sleep(1.5)
                 current_url = self.driver.current_url
 
         # in case that the user chose to download a certain number of photos.
@@ -364,20 +363,20 @@ class PhotosDownloader:
                     if file_data_tuple[-1] == "mp4":
                         time.sleep(3)
                     self.delete_photo()
-                    time.sleep(2)
+                    time.sleep(1.5)
                     if not self.older_photos:
                         previous_url = self.driver.current_url
                         time.sleep(1)
                         self.move_to_next_photo(Direction)
-                        time.sleep(2)
+                        time.sleep(1.5)
                 else:
                     self.move_to_next_photo(Direction)
-                    time.sleep(2)
+                    time.sleep(1.5)
                 current_url = self.driver.current_url
         finished_iterate_photos.value = True
         time.sleep(5)
-        print("finished_iterate_photos.value: ", finished_iterate_photos.value)
-        print("finished 1st process")
+        # print("finished_iterate_photos.value: ", finished_iterate_photos.value)
+        # print("finished 1st process")
         while not finished_download.value:
             time.sleep(1)
         self.driver.quit()
@@ -406,20 +405,20 @@ class PhotosDownloader:
                 file_full_path = shared_download_path.value + "\\" + original_name
 
                 if os.path.isfile(file_full_path):
-                    print(f"{file_name} were added to the queue!!!")
-                    print(len(file_list))
+                    # print(f"{file_name} were added to the queue!!!")
+                    # print(len(file_list))
                     ready_files_queue.put((file_full_path, file_name, file_date, designated_directory_path, suffix))
                 else:
                     file_list.append(file_data_tuple)
 
             # Stop if nothing happens for 150 seconds
             if time.time() - last_activity_time > 150:
-                print("Timeout reached: No activity in check_download for 150 seconds. Stopping.")
+                # print("Timeout reached: No activity in check_download for 150 seconds. Stopping.")
                 break
 
-        print("Finished 2nd process")
+        # print("Finished 2nd process")
         finished_download.value = True
-        print("finished_download.value: ", finished_download.value)
+        # print("finished_download.value: ", finished_download.value)
         time.sleep(3)
 
     ################ functions for the 3rd process ####################
@@ -445,18 +444,18 @@ class PhotosDownloader:
                 file_name = self.check_file_name(file_name, designated_directory_path, suffix)
                 new_name_path = designated_directory_path + "\\" + file_name
 
-                print("before move")
+                # print("before move")
                 shutil.move(file_full_path, new_name_path)
-                print(f"is the file still exist in the original path: {os.path.isfile(file_full_path)}")
+                # print(f"is the file still exist in the original path: {os.path.isfile(file_full_path)}")
 
                 self.set_metadata(new_name_path, file_date)
 
             # Stop if nothing happens for 300 seconds
             if time.time() - last_activity_time > 250:
-                print("Timeout reached: No activity in rename_and_move for 150 seconds. Stopping.")
+                # print("Timeout reached: No activity in rename_and_move for 150 seconds. Stopping.")
                 break
 
-        print("Finished renaming and moving files")
+        # print("Finished renaming and moving files")
 
     # setting the date of the picture to be the actual time the photo was taken
 
@@ -476,7 +475,7 @@ class PhotosDownloader:
         # Update the file's creation and modification dates using os.utime
         os.utime(file_path, (timestamp, timestamp))
 
-        print(f"Updated file {file_path} with new date: {date_str}")
+        # print(f"Updated file {file_path} with new date: {date_str}")
 
     def start(self):
 

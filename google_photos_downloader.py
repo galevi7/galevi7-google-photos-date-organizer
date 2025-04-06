@@ -185,9 +185,10 @@ if __name__ == "__main__":
             )
             pd.start()
         except Exception as e:
-            print(f"An error occurred: {str(e)}")
+            # print(f"An error occurred: {str(e)}")
+            error = str(e)
         finally:
-            print("Ended session")
+            # print("Ended session")
             # Show final message box
             root = Tk()
             root.withdraw()  # Hide the main window
