@@ -47,7 +47,7 @@ An easy-to-use tool to download and optionally delete photos from your Google Ph
 ## ⚙️ Step 3: Install the required tool (one-time only)
 
 1. Open the extracted folder  
-2. In the address bar at the top of the folder, type `cmd` and press Enter  
+2. In the address bar at the top of the folder (you can access it by pressing ctrl+L), type `cmd` and press Enter
    (this opens Command Prompt **in the right place**)
 
 3. Then paste this and press Enter:
@@ -68,8 +68,8 @@ In that same Command Prompt window, type:
 
 ## ✅ What This App Does
 
-- Downloads images from Google Photos  
-- Lets you choose whether to download all or a specific number  
+- Download images and videos from Google Photos  
+- Lets you choose whether to download all or a specific number of files 
 - Optionally deletes the photos after download
 
 ---
