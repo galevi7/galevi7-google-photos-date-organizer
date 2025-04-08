@@ -4,7 +4,12 @@
     <option name="autoReloadType" value="SELECTIVE" />
   </component>
   <component name="ChangeListManager">
-    <list default="true" id="aeb31955-dc47-404d-8a48-607f9342079d" name="Changes" comment="changed sleep time and print" />
+    <list default="true" id="aeb31955-dc47-404d-8a48-607f9342079d" name="Changes" comment="added instructions to README.md">
+      <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/google_photos_downloader.py" beforeDir="false" afterPath="$PROJECT_DIR$/google_photos_downloader.py" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/photos_downloader.py" beforeDir="false" afterPath="$PROJECT_DIR$/photos_downloader.py" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/playground.py" beforeDir="false" afterPath="$PROJECT_DIR$/playground.py" afterDir="false" />
+    </list>
     <option name="SHOW_DIALOG" value="false" />
     <option name="HIGHLIGHT_CONFLICTS" value="true" />
     <option name="HIGHLIGHT_NON_ACTIVE_CHANGELIST" value="false" />
@@ -136,6 +141,7 @@
       <workItem from="1743868299346" duration="1748000" />
       <workItem from="1743870498032" duration="1304000" />
       <workItem from="1743872094849" duration="7000" />
+      <workItem from="1744147343483" duration="537000" />
     </task>
     <task id="LOCAL-00001" summary="mkdir working, sign-in to google still not working">
       <created>1716703940274</created>
@@ -319,7 +325,14 @@
       <option name="project" value="LOCAL" />
       <updated>1743958702567</updated>
     </task>
-    <option name="localTasksCounter" value="27" />
+    <task id="LOCAL-00027" summary="added instructions to README.md">
+      <created>1744147735935</created>
+      <option name="number" value="00027" />
+      <option name="presentableId" value="LOCAL-00027" />
+      <option name="project" value="LOCAL" />
+      <updated>1744147735935</updated>
+    </task>
+    <option name="localTasksCounter" value="28" />
     <servers />
   </component>
   <component name="TypeScriptGeneratedFilesManager">
@@ -360,7 +373,8 @@
     <MESSAGE value="added more sleep" />
     <MESSAGE value="changed sleep time" />
     <MESSAGE value="changed sleep time and print" />
-    <option name="LAST_COMMIT_MESSAGE" value="changed sleep time and print" />
+    <MESSAGE value="added instructions to README.md" />
+    <option name="LAST_COMMIT_MESSAGE" value="added instructions to README.md" />
   </component>
   <component name="com.intellij.coverage.CoverageDataManagerImpl">
     <SUITE FILE_PATH="coverage/galevi7_google_photos_date_organizer$.coverage" NAME=" Coverage Results" MODIFIED="1735318912837" SOURCE_PROVIDER="com.intellij.coverage.DefaultCoverageFileProvider" RUNNER="coverage.py" COVERAGE_BY_TEST_ENABLED="true" COVERAGE_TRACING_ENABLED="false" WORKING_DIRECTORY="$PROJECT_DIR$/tests" />

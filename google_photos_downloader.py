@@ -187,8 +187,11 @@ if __name__ == "__main__":
         except Exception as e:
             # print(f"An error occurred: {str(e)}")
             error = str(e)
+            root = Tk()
+            root.withdraw()  # Hide the main window
+            messagebox.showinfo("Error", error)
+            root.destroy()
         finally:
-            # print("Ended session")
             # Show final message box
             root = Tk()
             root.withdraw()  # Hide the main window

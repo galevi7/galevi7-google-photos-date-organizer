@@ -293,7 +293,7 @@ class PhotosDownloader:
         self.driver.get(self.url)
 
         # Waiting until the user correctly logged-in and letting the driver sleep and not overload the cpu.
-        timeout = 180  # 2 minutes
+        timeout = 300  # 5 minutes
         start_time = time.time()
 
         while self.driver.current_url != self.url:
@@ -451,7 +451,7 @@ class PhotosDownloader:
                 self.set_metadata(new_name_path, file_date)
 
             # Stop if nothing happens for 300 seconds
-            if time.time() - last_activity_time > 250:
+            if time.time() - last_activity_time > 300:
                 # print("Timeout reached: No activity in rename_and_move for 150 seconds. Stopping.")
                 break
 
@@ -523,21 +523,3 @@ class PhotosDownloader:
                     process.terminate()
                     process.join()
 
-
-if __name__ == '__main__':
-    # make_directory("C:\\Users\\galev\\OneDrive\\Desktop")
-    # path_str = "C:\\Users\\galev\\OneDrive\\Desktop\\Google Photos"
-    # url = "https://photos.google.com/photo/AF1QipM7fvdLw3E9a8b-j-8AsER3HBK-iIPBTRkbKiFj"
-    # directory_path = "C:\\Users\\galev\\OneDrive\\Desktop\\Google Photos"
-    # older_photos = True
-    # download_all_photos = False
-    # number_of_photos = 5
-    # delete = False
-    pd = PhotosDownloader(r"https://photos.google.com/photo/AF1QipOYNN6jR-lqIKUC4dnJgp9uNnWVvjRnvYPA5jMN",
-                          r"C:\Users\galev\OneDrive\Desktop\Google Photos", True, False, 5, True)
-    try:
-        pd.start()
-    except Exception as e:
-        print(str(e))
-    finally:
-        print("finished")

@@ -9,7 +9,6 @@ from photos_downloader import PhotosDownloader
 if __name__ == '__main__':
 
     options = webdriver.ChromeOptions()
-    # options.add_argument("user-data-dir=C:\\Users\\galev\\AppData\\Local\\Google\\Chrome\\User Data")
     options.add_argument("--disable-blink-features=AutomationControlled")
     options.add_argument("--lang=he")
     options.add_experimental_option("useAutomationExtension", False)
